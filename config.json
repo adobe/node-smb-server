@@ -2,6 +2,7 @@
   "server": {
     "port" : 8445,
     "host" : "localhost"
-  }
+  },
+  "primaryDomain": "dam"
 }
 
