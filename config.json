@@ -1,8 +1,8 @@
 {
-  "server": {
+  "listen": {
     "port" : 8445,
     "host" : "localhost"
   },
-  "primaryDomain": "dam"
+  "domainName": ""
 }
 
