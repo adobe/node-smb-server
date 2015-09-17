@@ -1,8 +1,23 @@
 {
-  "listen": {
+  "listen" : {
     "port" : 8445,
     "host" : "localhost"
   },
-  "domainName": ""
+  "domainName" : "",
+  "allowAnonymous" : false,
+  "users" : {
+    "test" : {
+      "lmHash" : "01fc5a6be7bc6929aad3b435b51404ee",
+      "ntlmHash" : "0cb6948805f797bf2a82807973b89537"
+    },
+    "admin" : {
+      "lmHash" : "f0d412bd764ffe81aad3b435b51404ee",
+      "ntlmHash" : "209c6174da490caeb422f3fa5a7ae634"
+    },
+    "guest" : {
+      "lmHash" : "aad3b435b51404eeaad3b435b51404ee",
+      "ntlmHash" : "31d6cfe0d16ae931b73c59d7e0c089c0"
+    }
+  }
 }
 
