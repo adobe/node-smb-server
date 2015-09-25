@@ -9,7 +9,7 @@
   "dependencies": {
     "binary": "~0.3.0",
     "put": "~0.0.6",
-    "winston": "~0.8.3",
+    "winston": "^1.0.1",
     "async": "^1.4.2",
     "lodash": "^2.4.2",
     "long": "^2.2.5"
