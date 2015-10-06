@@ -23,7 +23,7 @@
     "TMP": {
       "backend": "fs",
       "description": "test share",
-      "path": "/Users/stefan/tmp"
+      "path": "/Users/stefan/tmp/smbhome"
     }
   }
 }
