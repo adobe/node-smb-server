@@ -1,6 +1,7 @@
 {
   "listen" : {
-    "port" : 8445
+    "port" : 8445,
+    "host" : "0.0.0.0"
   },
   "domainName" : "",
   "allowAnonymous" : false,
