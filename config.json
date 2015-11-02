@@ -3,6 +3,7 @@
     "port" : 8445,
     "host" : "0.0.0.0"
   },
+  "protocol" : "CIFS",
   "domainName" : "",
   "allowAnonymous" : false,
   "users" : {
@@ -24,6 +25,18 @@
       "backend": "fs",
       "description": "test share",
       "path": "/Users/stefan/tmp/smbhome"
+    },
+    "DAM": {
+      "backend": "jcr",
+      "description": "DAM share",
+      "host": "localhost",
+      "port": 4502,
+      "auth": {
+        "username": "admin",
+        "password": "admin"
+      },
+      "path": "/content/dam",
+      "cacheMaxAge": 5000
     }
   }
 }
