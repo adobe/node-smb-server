@@ -32,8 +32,8 @@
       "host": "localhost",
       "port": 4502,
       "auth": {
-        "username": "admin",
-        "password": "admin"
+        "user": "admin",
+        "pass": "admin"
       },
       "path": "/content/dam",
       "cacheMaxAge": 5000
