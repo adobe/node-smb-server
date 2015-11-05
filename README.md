@@ -11,7 +11,6 @@ CIFS:
 * proper implementation of LOCKING_ANDX
 * missing TRANSACTION2 subcommand information levels
 * missing CIFS commands:
-** DELETE_DIRECTORY
 ** CHECK_DIRECTORY
 ** TRANSACTION
 ** TRANSACTION_SECONDARY

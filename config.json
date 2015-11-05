@@ -21,14 +21,14 @@
     }
   },
   "shares": {
-    "TMP": {
+    "FS": {
       "backend": "fs",
-      "description": "test share",
-      "path": "/Users/stefan/tmp/smbhome"
+      "description": "fs-based test share",
+      "path": "./smbroot"
     },
-    "DAM": {
+    "JCR": {
       "backend": "jcr",
-      "description": "DAM share",
+      "description": "jcr-based test share",
       "host": "localhost",
       "port": 4502,
       "auth": {
