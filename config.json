@@ -26,7 +26,7 @@
       "description": "fs-based test share",
       "path": "./smbroot"
     },
-    "JCR": {
+    "DAM": {
       "backend": "jcr",
       "description": "jcr-based test share",
       "host": "localhost",
