@@ -4,6 +4,10 @@ A 100% javascript implementation of the [SMB][] file sharing protocol.
 
 ## ToDo's
 
+General:
+
+* separate debug components for SMB and backend (exposed through server object?)
+
 CIFS:
 
 * Extended Security/SMB Signing
@@ -12,14 +16,14 @@ CIFS:
 * missing TRANSACTION2 subcommand information levels
 * missing CIFS commands:
   * CHECK_DIRECTORY
+  * OPEN_ANDX
   * TRANSACTION
   * TRANSACTION_SECONDARY
-  * OPEN_ANDX
   * TRANSACTION2_SECONDARY
-  * FIND_CLOSE2
   * NT_TRANSACT_SECONDARY
   * NT_CANCEL
   * OPEN_PRINT_FILE
+* enum shares (RPC protocol)
 
 Check/Implement the following protocol extensions/versions:
 
