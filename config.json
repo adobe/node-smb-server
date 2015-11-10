@@ -3,7 +3,6 @@
     "port" : 8445,
     "host" : "0.0.0.0"
   },
-  "protocol" : "CIFS",
   "domainName" : "",
   "allowAnonymous" : false,
   "users" : {
