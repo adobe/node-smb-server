@@ -4,10 +4,6 @@ A 100% javascript implementation of the [SMB][] file sharing protocol.
 
 ## ToDo's
 
-General:
-
-* separate debug components for SMB and backend (exposed through server object?)
-
 CIFS:
 
 * Extended Security/SMB Signing
