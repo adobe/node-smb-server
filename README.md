@@ -11,6 +11,7 @@ CIFS:
 * missing TRANSACTION2 subcommands (e.g. TRANS2_QUERY_FILE_INFORMATION)
 * missing TRANSACTION2 subcommand information levels
 * missing CIFS commands:
+  * SET_INFORMATION (deprecated but used occasionally by Finder)
   * TRANSACTION and subcommands
   * TRANSACTION_SECONDARY
   * TRANSACTION2_SECONDARY
