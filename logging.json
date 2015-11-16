@@ -1,0 +1,44 @@
+{
+  "default": {
+    "console": {
+      "level": "info",
+      "colorize": true,
+      "label": "SRV"
+    },
+    "file": {
+      "level": "debug",
+      "timestamp": true,
+      "json": false,
+      "tailable": "true",
+      "filename": "./server.log"
+    }
+  },
+  "smb": {
+    "console": {
+      "level": "info",
+      "colorize": true,
+      "label": "SMB"
+    },
+    "file": {
+      "level": "debug",
+      "timestamp": true,
+      "json": false,
+      "tailable": "true",
+      "filename": "./smb.log"
+    }
+  },
+  "spi": {
+    "console": {
+      "level": "info",
+      "colorize": true,
+      "label": "SPI"
+    },
+    "file": {
+      "level": "debug",
+      "timestamp": true,
+      "json": false,
+      "tailable": "true",
+      "filename": "./spi.log"
+    }
+  }
+}
