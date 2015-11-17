@@ -19,6 +19,6 @@
 'use strict';
 
 var init = require('./lib/logging');
-init(null, function(){
-    require('./lib/server');
+init(null, function () {
+  require('./lib/server');
 });
