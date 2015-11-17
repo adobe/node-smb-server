@@ -18,4 +18,7 @@
 
 'use strict';
 
-module.exports = require('./lib/server');
+var init = require('./lib/logging');
+init(null, function(){
+    require('./lib/server');
+});
