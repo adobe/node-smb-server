@@ -11,14 +11,13 @@ CIFS:
 * missing TRANSACTION2 subcommands (e.g. TRANS2_QUERY_FILE_INFORMATION)
 * missing TRANSACTION2 subcommand information levels
 * missing CIFS commands:
-  * SET_INFORMATION (deprecated but used occasionally by Finder)
   * TRANSACTION and subcommands
   * TRANSACTION_SECONDARY
   * TRANSACTION2_SECONDARY
   * NT_TRANSACT_SECONDARY
   * OPEN_PRINT_FILE
-* enum shares (RPC protocol)
-* proper implementation of LOCKING_ANDX
+* enum shares (DCE/RPC over SMB named pipes)
+* proper implementation of LOCKING_ANDX ?
 
 Check/Implement the following protocol extensions/versions:
 
