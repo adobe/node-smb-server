@@ -44,7 +44,7 @@
         "user": "admin",
         "pass": "admin"
       },
-      "path": "/content/dam"
+      "path": "/tmp"
     }
   }
 }
