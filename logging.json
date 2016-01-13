@@ -39,6 +39,19 @@
       "json": false,
       "tailable": "true",
       "filename": "./spi.log"
+    },
+    "dcerpc": {
+      "console": {
+        "level": "info",
+        "colorize": true,
+        "label": "DCERPC"
+      },
+      "file": {
+        "level": "debug",
+        "timestamp": true,
+        "json": false,
+        "tailable": "true",
+        "filename": "./dcerpc.log"
+      }
     }
-  }
 }
