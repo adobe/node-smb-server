@@ -16,7 +16,6 @@ CIFS:
   * TRANSACTION2_SECONDARY
   * NT_TRANSACT_SECONDARY
   * OPEN_PRINT_FILE
-* enum shares (DCE/RPC over SMB named pipes)
 * proper implementation of LOCKING_ANDX ?
 
 Check/Implement the following protocol extensions/versions:
