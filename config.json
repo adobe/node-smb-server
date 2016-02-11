@@ -32,19 +32,8 @@
       "host": "localhost",
       "port": 4502,
       "auth": {
-        "user": "admin",
-        "pass": "admin"
-      },
-      "cacheTTL": 60000
-    },
-    "DAMRMT": {
-      "backend": "dam",
-      "description": "DAM-based test share",
-      "host": "gearloose.corp.adobe.com",
-      "port": 4502,
-      "auth": {
-        "user": "admin",
-        "pass": "admin"
+        "user": "<user>",
+        "pass": "<pwd>"
       },
       "cacheTTL": 60000
     },
@@ -54,10 +43,10 @@
       "host": "localhost",
       "port": 4502,
       "auth": {
-        "user": "admin",
-        "pass": "admin"
+        "user": "<user>",
+        "pass": "<pwd>"
       },
-      "path": "/tmp",
+      "path": "/",
       "cacheTTL": 10000
     }
   }
