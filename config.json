@@ -5,6 +5,7 @@
   },
   "domainName" : "",
   "allowAnonymous" : false,
+  "smb2Support": false,
   "users" : {
     "test" : {
       "lmHash" : "01fc5a6be7bc6929aad3b435b51404ee",
@@ -33,7 +34,19 @@
       "auth": {
         "user": "admin",
         "pass": "admin"
-      }
+      },
+      "cacheTTL": 60000
+    },
+    "DAMRMT": {
+      "backend": "dam",
+      "description": "DAM-based test share",
+      "host": "gearloose.corp.adobe.com",
+      "port": 4502,
+      "auth": {
+        "user": "admin",
+        "pass": "admin"
+      },
+      "cacheTTL": 60000
     },
     "JCR": {
       "backend": "jcr",
@@ -44,7 +57,8 @@
         "user": "admin",
         "pass": "admin"
       },
-      "path": "/tmp"
+      "path": "/tmp",
+      "cacheTTL": 10000
     }
   }
 }
