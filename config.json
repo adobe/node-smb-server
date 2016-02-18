@@ -6,6 +6,7 @@
   "domainName" : "",
   "allowAnonymous" : false,
   "smb2Support": false,
+  "extendedSecurity": false,
   "users" : {
     "test" : {
       "lmHash" : "01fc5a6be7bc6929aad3b435b51404ee",
