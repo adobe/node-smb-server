@@ -6,7 +6,7 @@
   "domainName" : "",
   "allowAnonymous" : false,
   "smb2Support": false,
-  "extendedSecurity": false,
+  "extendedSecurity": true,
   "users" : {
     "test" : {
       "lmHash" : "01fc5a6be7bc6929aad3b435b51404ee",
@@ -36,7 +36,7 @@
         "user": "<user>",
         "pass": "<pwd>"
       },
-      "cacheTTL": 60000
+      "cacheTTL": 10000
     },
     "JCR": {
       "backend": "jcr",

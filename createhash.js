@@ -14,8 +14,8 @@
 
 var Path = require('path');
 
-var lm = require('./lib/auth').lm;
-var ntlm = require('./lib/auth').ntlm;
+var lm = require('./lib/ntlm').lm;
+var ntlm = require('./lib/ntlm').ntlm;
 
 if (process.argv.length === 3) {
   var pwd = process.argv[2];
