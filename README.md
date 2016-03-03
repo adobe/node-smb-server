@@ -4,8 +4,9 @@ A 100% javascript implementation of the [SMB][] file sharing protocol.
 
 ## Current Status
 
-Implements CIFS and MS-SMB 1.0. Tested with Finder on OS X (Yosemite, El Capitan).
-Support for SMB2 is currently work in progress. 
+* Implements CIFS and MS-SMB 1.0. 
+* Tested with Finder on OS X (Yosemite, El Capitan).
+* Support for SMB2 is currently work in progress. 
 
 ## ToDo's
 
@@ -23,6 +24,7 @@ CIFS/SMB:
   * TRANSACTION2_SECONDARY
   * NT_TRANSACT_SECONDARY
   * OPEN_PRINT_FILE
+* support for named streams?
 * SMB Signing?
 * proper implementation of LOCKING_ANDX?
 * missing MS-SMB 1.0 command extensions?
