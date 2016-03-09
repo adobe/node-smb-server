@@ -1,4 +1,4 @@
-# SMB Server for Node.js
+# Node SMB Server
 
 A 100% javascript implementation of the [SMB][] file sharing protocol.
 
