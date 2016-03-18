@@ -27,7 +27,6 @@ CIFS/SMB:
 * support for named streams?
 * SMB Signing?
 * proper implementation of LOCKING_ANDX?
-* missing MS-SMB 1.0 command extensions?
 
 Check/Implement the following protocol extensions/versions:
 
