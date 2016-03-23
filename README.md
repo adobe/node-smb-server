@@ -16,9 +16,8 @@ A 100% javascript implementation of the [SMB][] file sharing protocol.
 CIFS/SMB:
 
 * missing NT_TRANSACT subcommands
-* missing TRANSACTION2 subcommands (e.g. TRANS2_QUERY_FILE_INFORMATION)
-* missing TRANSACTION2 subcommand information levels
 * missing TRANSACTION subcommands
+* missing TRANSACTION2 subcommand information levels
 * missing CIFS commands:
   * TRANSACTION_SECONDARY
   * TRANSACTION2_SECONDARY
