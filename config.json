@@ -36,7 +36,8 @@
         "user": "<user>",
         "pass": "<pwd>"
       },
-      "cacheTTL": 10000
+      "contentCacheTTL": 30000,
+      "binCacheTTL": 600000
     },
     "JCR": {
       "backend": "jcr",
@@ -48,7 +49,8 @@
         "pass": "<pwd>"
       },
       "path": "/",
-      "cacheTTL": 10000
+      "contentCacheTTL": 30000,
+      "binCacheTTL": 600000
     }
   }
 }
