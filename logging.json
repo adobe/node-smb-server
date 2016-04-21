@@ -9,7 +9,10 @@
       "level": "debug",
       "timestamp": true,
       "json": false,
-      "tailable": "true",
+      "maxsize": 5242880,
+      "maxFiles": 10,
+      "zippedArchive": true,
+      "tailable": true,
       "filename": "./server.log"
     }
   },
@@ -23,7 +26,10 @@
       "level": "debug",
       "timestamp": true,
       "json": false,
-      "tailable": "true",
+      "maxsize": 5242880,
+      "maxFiles": 10,
+      "zippedArchive": true,
+      "tailable": true,
       "filename": "./smb.log"
     }
   },
@@ -37,7 +43,10 @@
       "level": "debug",
       "timestamp": true,
       "json": false,
-      "tailable": "true",
+      "maxsize": 5242880,
+      "maxFiles": 10,
+      "zippedArchive": true,
+      "tailable": true,
       "filename": "./spi.log"
     }
   },
@@ -51,7 +60,10 @@
       "level": "debug",
       "timestamp": true,
       "json": false,
-      "tailable": "true",
+      "maxsize": 5242880,
+      "maxFiles": 10,
+      "zippedArchive": true,
+      "tailable": true,
       "filename": "./dcerpc.log"
     }
   }
