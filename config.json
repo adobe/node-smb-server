@@ -1,4 +1,5 @@
 
+
 {
   "listen" : {
     "port" : 8445,
@@ -33,6 +34,7 @@
       "description": "DAM-based test share",
       "host": "localhost",
       "port": 4502,
+      "protocol": "http:",
       "auth": {
         "user": "<user>",
         "pass": "<pwd>"
@@ -46,6 +48,7 @@
       "description": "AEM-based test share",
       "host": "localhost",
       "port": 4502,
+      "protocol": "http:",
       "auth": {
         "user": "<user>",
         "pass": "<pwd>"
