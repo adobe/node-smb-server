@@ -1,3 +1,4 @@
+
 {
   "listen" : {
     "port" : 8445,
@@ -36,6 +37,7 @@
         "user": "<user>",
         "pass": "<pwd>"
       },
+      "maxSockets": 32,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000
     },
@@ -49,6 +51,7 @@
         "pass": "<pwd>"
       },
       "path": "/",
+      "maxSockets": 32,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000
     }
