@@ -39,7 +39,7 @@
         "user": "<user>",
         "pass": "<pwd>"
       },
-      "maxSockets": 32,
+      "maxSockets": 64,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000
     },
@@ -54,7 +54,7 @@
         "pass": "<pwd>"
       },
       "path": "/",
-      "maxSockets": 32,
+      "maxSockets": 64,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000
     }
