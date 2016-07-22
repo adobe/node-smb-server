@@ -57,6 +57,26 @@
       "maxSockets": 64,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000
+    },
+    "RQ": {
+      "backend": "rq",
+      "description": "rq-based test share",
+      "host": "localhost",
+      "port": 4502,
+      "protocol": "http:",
+      "auth": {
+        "user": "admin",
+        "pass": "admin"
+      },
+      "maxSockets": 64,
+      "contentCacheTTL": 30000,
+      "binCacheTTL": 600000,
+      "local":{
+        "backend": "fs",
+        "description": "fs test share local",
+        "path": "./smbrqroot",
+        "workpath": "./smbrqwork"
+      }
     }
   }
 }
