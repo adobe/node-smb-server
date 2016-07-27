@@ -71,6 +71,9 @@
       "maxSockets": 64,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000,
+      "expiration": 10000,
+      "frequency": 3000,
+      "maxRetries": 3,
       "local":{
         "backend": "fs",
         "description": "fs test share local",
