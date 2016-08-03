@@ -20,25 +20,6 @@ var Datastore = require('nedb');
 function TestCommon() {
     var self = this;
 
-    var _info = console.info;
-    self.log = {
-        trace: function(args) {
-            _info.call(console, args);
-        },
-        debug: function(args) {
-            _info.call(console, args);
-        },
-        info: function(args) {
-            _info.call(console, args);
-        },
-        warn: function(args) {
-            _info.call(console, args);
-        },
-        error: function(args) {
-            _info.call(console, args);
-        }
-    };
-
     self.fs = {
         setTestFile: function(filePath, data) {
             if (this.allFiles[filePath] === undefined) {

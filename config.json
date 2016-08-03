@@ -71,7 +71,7 @@
       "maxSockets": 64,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000,
-      "expiration": 10000,
+      "expiration": 30000,
       "frequency": 3000,
       "maxRetries": 3,
       "retryDelay": 1000,
