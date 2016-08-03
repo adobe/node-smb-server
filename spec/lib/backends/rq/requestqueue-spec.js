@@ -228,14 +228,40 @@
                  });
              });
          });
+
+         it("testUpdatePathSub", function (done) {
+             addRequestOptions('DELETE', testPath + '/sub', testName, testLocalPrefix, testRemotePrefix);
+             rq.updatePath(testPath, testDestPath, function (err) {
+                 expect(err).toBeFalsy();
+                 rq.getRequests(testDestPath + '/sub', function (err, lookup) {
+                     expect(err).toBeFalsy();
+                     expect(lookup[testName]).toEqual('DELETE');
+                     done();
+                 });
+             });
+         });
      });
 
      describe("RemovePath", function () {
          it("testRemovePath", function (done) {
              addRequest('PUT');
+             addRequest('DELETE', testPath, testDestName, testLocalPrefix, testRemotePrefix);
              rq.removePath(testPath, function (err) {
                  expect(err).toBeFalsy();
                  rq.getRequests(testPath, function (err, lookup) {
+                     expect(err).toBeFalsy();
+                     expect(lookup[testName]).toBeFalsy();
+                     expect(lookup[testDestName]).toBeFalsy();
+                     done();
+                 });
+             });
+         });
+
+         it("testRemotePathSub", function (done) {
+             addRequestOptions('DELETE', testPath + '/sub', testName, testLocalPrefix, testRemotePrefix);
+             rq.removePath(testPath, function (err) {
+                 expect(err).toBeFalsy();
+                 rq.getRequests(testPath + '/sub', function (err, lookup) {
                      expect(err).toBeFalsy();
                      expect(lookup[testName]).toBeFalsy();
                      done();
@@ -247,12 +273,30 @@
      describe("CopyPath", function () {
          it("testCopyPath", function (done) {
              addRequest('PUT');
+             addRequestOptions('DELETE', testPath, testDestName, testLocalPrefix, testRemotePrefix);
              rq.copyPath(testPath, testDestPath, function (err) {
                  expect(err).toBeFalsy();
                  rq.getRequests(testPath, function (err, lookup) {
                      expect(err).toBeFalsy();
                      expect(lookup[testName]).toEqual('PUT');
                      rq.getRequests(testDestPath, function (err, lookup) {
+                         expect(err).toBeFalsy();
+                         expect(lookup[testName]).toEqual('PUT');
+                         expect(lookup[testDestName]).toEqual('DELETE');
+                         done();
+                     });
+                 });
+             });
+         });
+
+         it("testCopyPathSub", function (done) {
+             addRequestOptions('PUT', testPath + '/sub', testName, testLocalPrefix, testRemotePrefix);
+             rq.copyPath(testPath, testDestPath, function (err) {
+                 expect(err).toBeFalsy();
+                 rq.getRequests(testDestPath + '/sub', function (err, lookup) {
+                     expect(err).toBeFalsy();
+                     expect(lookup[testName]).toEqual('PUT');
+                     rq.getRequests(testPath + '/sub', function (err, lookup) {
                          expect(err).toBeFalsy();
                          expect(lookup[testName]).toEqual('PUT');
                          done();
