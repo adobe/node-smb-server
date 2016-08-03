@@ -154,7 +154,7 @@
              rq.getProcessRequest(0, 3, function (err, req) {
                  expect(err).toBeFalsy();
                  var currRetries = req.retries;
-                 rq.setRetryCount(req.path, req.name, currRetries + 1, function (err) {
+                 rq.incrementRetryCount(req.path, req.name, function (err) {
                      expect(err).toBeFalsy();
 
                      rq.getProcessRequest(0, 3, function (err, req) {
@@ -162,6 +162,27 @@
                          expect(req.retries).toEqual(currRetries + 1);
                          done();
                      });
+                 });
+             });
+         });
+     });
+
+     describe("PurgeFailedRequests", function () {
+         it("testPurgeFailedRequests", function (done) {
+             addRequest('PUT');
+             addRequestOptions('PUT', testPath, testDestName, testLocalPrefix, testRemotePrefix);
+             rq.purgeFailedRequests(0, function (err, purged) {
+                 expect(err).toBeFalsy();
+                 expect(purged.length).toEqual(2);
+                 var tempPath = testPath + '/' + testDestName;
+                 expect(purged[0] == tempPath || purged[0] == testFullPath).toEqual(true);
+                 expect(purged[1] == tempPath || purged[1] == testFullPath).toEqual(true);
+
+                 rq.getRequests(testPath, function (err, lookup) {
+                     expect(err).toBeFalsy();
+                     expect(lookup[testName]).toBeFalsy();
+                     expect(lookup[testDestName]).toBeFalsy();
+                     done();
                  });
              });
          });
