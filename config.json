@@ -75,11 +75,16 @@
       "frequency": 3000,
       "maxRetries": 3,
       "retryDelay": 1000,
+      "modifiedThreshold": 100,
       "local":{
         "backend": "fs",
         "description": "fs test share local",
-        "path": "./smbrqroot",
-        "workpath": "./smbrqwork"
+        "path": "./smbrqroot"
+      },
+      "work": {
+        "backend": "fs",
+        "description": "fs test share work",
+        "path": "./smbrqwork"
       }
     }
   }
