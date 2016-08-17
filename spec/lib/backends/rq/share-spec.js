@@ -18,7 +18,11 @@ describe('RQShare', function (){
     var testShare;
 
     beforeEach(function () {
-        testShare = new RQShare('rq', {}, new TestShare('test', {}), new TestTree(), new TestTree(), new TestTree());
+        testShare = new RQShare('rq', {
+            work: {
+                path: '/work/path'
+            }
+        }, new TestShare('test', {}), new TestTree(), new TestTree(), new TestTree());
     });
 
     it('testConnect', function (done) {

@@ -54,12 +54,10 @@ function RQCommon() {
         self.workTree);
     self.testTree = new RQTree(
         self.testShare,
-        {},
-        self.tempFilesTree,
+        self.remoteTree,
         {
-            remote: self.remoteTree,
-            local: self.localTree,
-            work: self.workTree,
+            localTree: self.localTree,
+            workTree: self.workTree,
             rqdb: self.db,
             noprocessor: true
         });

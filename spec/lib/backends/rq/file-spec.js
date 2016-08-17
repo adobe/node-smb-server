@@ -256,6 +256,27 @@ describe('RQFile', function () {
                 });
             });
         });
+
+        it('testCacheFileLocalQueuedFile', function (done) {
+            c.addFile(c.remoteTree, '/testfile', function (remoteFile) {
+                var rqFile = RQFile.createInstanceFromRemote('/testfile', c.testTree, remoteFile);
+                rqFile.cacheFile(function (err, localFile) {
+                    expect(err).toBeFalsy();
+                    remoteFile.setLastModified(remoteFile.lastModified() + 100000);
+                    localFile.setLastModified(localFile.lastModified() + 10000);
+                    c.testTree.queueData('/testfile', 'POST', false, function (err) {
+                        expect(err).toBeFalsy();
+                        rqFile.cacheFile(function (err, newLocalFile) {
+                            expect(err).toBeFalsy();
+                            expect(localFile.created()).toEqual(newLocalFile.created());
+                            expect(localFile.lastModified()).toEqual(newLocalFile.lastModified());
+                            expect(c.testShare.emit).not.toHaveBeenCalled();
+                            done();
+                        });
+                    });
+                });
+            });
+        });
     });
 
     describe('CanDelete', function () {
