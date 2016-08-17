@@ -85,7 +85,15 @@
         "backend": "fs",
         "description": "fs test share work",
         "path": "./smbrqwork"
-      }
+      },
+      "events": [
+        "syncfilestart",
+        "syncfileend",
+        "syncfileerr",
+        "syncerr",
+        "syncpurged",
+        "syncconflict"
+      ]
     }
   }
 }
