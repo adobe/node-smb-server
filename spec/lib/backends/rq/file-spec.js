@@ -103,6 +103,27 @@ describe('RQFile', function () {
         });
     });
 
+    describe('RefreshWorkFiles', function () {
+        it('testRefreshWorkFiles', function (done) {
+            c.addFile(c.remoteTree, '/testfile', function() {
+                c.testTree.open('/testfile', function (err, rqFile) {
+                    rqFile.cacheFile(function (err, cached) {
+                        c.expectLocalFileExist('/testfile', true, false, function() {
+                            var created = rqFile.created();
+                            RQFile.refreshWorkFiles('/testfile', c.testTree, function (err) {
+                                expect(err).toBeFalsy();
+                                c.testTree.open('/testfile', function (err, newRqFile) {
+                                    expect(newRqFile.created()).toBeGreaterThan(created);
+                                    done();
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+
     describe('ProcessCreatedFile', function () {
         it('testProcessCreatedFileNotExists', function (done) {
             c.addFile(c.localTree, '/testfile', function (file) {
@@ -236,12 +257,18 @@ describe('RQFile', function () {
                     expect(err).toBeFalsy();
                     remoteFile.setLastModified(remoteFile.lastModified() + 100000);
                     localFile.setLastModified(localFile.lastModified() + 10000);
-                    rqFile.cacheFile(function (err, newLocalFile) {
+                    remoteFile.close(function (err) {
                         expect(err).toBeFalsy();
-                        expect(localFile.created()).toEqual(newLocalFile.created());
-                        expect(localFile.lastModified()).toEqual(newLocalFile.lastModified());
-                        expect(c.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
-                        done();
+                        localFile.close(function (err) {
+                            expect(err).toBeFalsy();
+                            rqFile.cacheFile(function (err, newLocalFile) {
+                                expect(err).toBeFalsy();
+                                expect(localFile.created()).toEqual(newLocalFile.created());
+                                expect(localFile.lastModified()).toEqual(newLocalFile.lastModified());
+                                expect(c.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
+                                done();
+                            });
+                        });
                     });
                 });
             });
@@ -264,14 +291,20 @@ describe('RQFile', function () {
                     expect(err).toBeFalsy();
                     remoteFile.setLastModified(remoteFile.lastModified() + 100000);
                     localFile.setLastModified(localFile.lastModified() + 10000);
-                    c.testTree.queueData('/testfile', 'POST', false, function (err) {
+                    remoteFile.close(function (err) {
                         expect(err).toBeFalsy();
-                        rqFile.cacheFile(function (err, newLocalFile) {
+                        localFile.close(function (err) {
                             expect(err).toBeFalsy();
-                            expect(localFile.created()).toEqual(newLocalFile.created());
-                            expect(localFile.lastModified()).toEqual(newLocalFile.lastModified());
-                            expect(c.testShare.emit).not.toHaveBeenCalled();
-                            done();
+                            c.testTree.queueData('/testfile', 'POST', false, function (err) {
+                                expect(err).toBeFalsy();
+                                rqFile.cacheFile(function (err, newLocalFile) {
+                                    expect(err).toBeFalsy();
+                                    expect(localFile.created()).toEqual(newLocalFile.created());
+                                    expect(localFile.lastModified()).toEqual(newLocalFile.lastModified());
+                                    expect(c.testShare.emit).not.toHaveBeenCalled();
+                                    done();
+                                });
+                            });
                         });
                     });
                 });
@@ -323,10 +356,16 @@ describe('RQFile', function () {
                 rqFile.cacheFile(function (err, localFile) {
                     expect(err).toBeFalsy();
                     localFile.setLastModified(localFile.lastModified() + 10000);
-                    rqFile.canDelete(function (err, canDelete) {
+                    localFile.close(function (err) {
                         expect(err).toBeFalsy();
-                        expect(canDelete).toBeFalsy();
-                        done();
+                        c.testTree.open('/testfile', function (err, rqFile) {
+                            expect(err).toBeFalsy();
+                            rqFile.canDelete(function (err, canDelete) {
+                                expect(err).toBeFalsy();
+                                expect(canDelete).toBeFalsy();
+                                done();
+                            });
+                        });
                     });
                 });
             });

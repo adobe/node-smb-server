@@ -188,6 +188,124 @@ describe('RQTree', function () {
                 });
             });
         });
+
+        it('testListRemoteDeleted', function (done) {
+            common.addFiles(common.remoteTree, 3, function () {
+                common.addFiles(common.localTree, 3, function () {
+                    common.remoteTree.delete('/testfile1', function (err) {
+                        expect(err).toBeFalsy();
+                        common.testTree.list('/', function (err, files) {
+                            expect(err).toBeFalsy();
+                            expect(files.length).toEqual(2);
+                            expectHasFile(files, '/testfile2');
+                            expectHasFile(files, '/testfile3');
+                            common.expectQueuedMethod('/', 'testfile1', false, function () {
+                                common.expectLocalFileExist('/testfile1', false, false, done);
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
+        it('testListRemoteDeletedCantDelete', function (done) {
+            var currTime = new Date().getTime();
+            common.addFiles(common.remoteTree, 3, function () {
+                common.addFiles(common.localTree, 2, function () {
+                    common.localTree.addFileWithDates('/testfile3', false, 'content', currTime, currTime + 20000, function (err, file) {
+                        expect(err).toBeFalsy();
+                        common.remoteTree.delete('/testfile3', function (err) {
+                            expect(err).toBeFalsy();
+                            common.testTree.list('/', function (err, files) {
+                                expect(err).toBeFalsy();
+                                expect(files.length).toEqual(3);
+                                expectHasFile(files, '/testfile1');
+                                expectHasFile(files, '/testfile2');
+                                expectHasFile(files, '/testfile3');
+                                common.expectQueuedMethod('/', 'testfile3', false, function () {
+                                    expect(common.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
+                                    common.expectLocalFileExist('/testfile3', true, false, done);
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
+        it('testListRemoteDirectoryDeleted', function (done) {
+            common.addFiles(common.remoteTree, 3, function () {
+                common.addDirectory(common.remoteTree, '/test', function () {
+                    common.addDirectory(common.localTree, '/test', function () {
+                        common.remoteTree.deleteDirectory('/test', function (err) {
+                            expect(err).toBeFalsy();
+                            common.testTree.list('/', function (err, items) {
+                                expect(err).toBeFalsy();
+                                expect(items.length).toEqual(3);
+                                expectHasFile(items, '/testfile1');
+                                expectHasFile(items, '/testfile2');
+                                expectHasFile(items, '/testfile3');
+                                common.expectPathExist(common.localTree, '/test', false, done);
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    describe('DeleteLocalDirectoryRecursive', function () {
+        it('testDeleteLocalDirectoryRecursive', function (done) {
+            common.addDirectory(common.localTree, '/removeme', function () {
+                common.addFile(common.localTree, '/removeme/file1', function () {
+                    common.addDirectory(common.localTree, '/removeme/subfolder', function () {
+                        common.addFile(common.localTree, '/removeme/subfolder/file2', function () {
+                            common.testTree.deleteLocalDirectoryRecursive('/removeme', function (err) {
+                                expect(err).toBeFalsy();
+                                common.expectPathExist(common.localTree, '/removeme', false, function () {
+                                    common.expectPathExist(common.localTree, '/removeme/subfolder', false, function () {
+                                        common.expectLocalFileExist('/removeme/file1', false, false, function () {
+                                            common.expectLocalFileExist('/removeme/subfolder/file2', false, false, done);
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    })
+                });
+            });
+        });
+
+        it('testDeleteLocalDirectoryRecursiveCantDelete', function (done) {
+            common.addDirectory(common.localTree, '/removeme', function () {
+                common.addDirectory(common.localTree, '/removeme/sub', function () {
+                    common.addFile(common.localTree, '/removeme/sub/file1', function () {
+                        common.addFile(common.localTree, '/removeme/sub/file2', function () {
+                            common.localTree.open('/removeme/sub/file1', function (err, file) {
+                                expect(err).toBeFalsy();
+                                file.setLastModified(file.lastModified() + 100000);
+                                file.close(function (err) {
+                                    expect(err).toBeFalsy();
+                                    common.testTree.deleteLocalDirectoryRecursive('/removeme', function (err) {
+                                        expect(err).toBeFalsy();
+                                        common.expectPathExist(common.localTree, '/removeme', true, function () {
+                                            common.expectPathExist(common.localTree, '/removeme/sub', true, function () {
+                                                common.expectLocalFileExist('/removeme/sub/file1', true, false, function () {
+                                                    common.expectLocalFileExist('/removeme/sub/file2', false, false, function () {
+                                                        expect(common.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
+                                                        done();
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 
     describe('QueueData', function () {
