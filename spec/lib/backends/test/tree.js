@@ -152,6 +152,9 @@ TestTree.prototype.open = function (name, cb) {
 
 TestTree.prototype.list = function (pattern, cb) {
     var self = this;
+    if (pattern.charAt(pattern.length - 1) == '*') {
+        pattern = pattern.substr(0, pattern.length - 2);
+    }
     self.entities.find({path: pattern}, function (err, docs) {
         if (err) {
             cb(err);

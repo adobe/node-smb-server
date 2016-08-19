@@ -71,4 +71,8 @@ TestShare.prototype.fetchResource = function (path, cb) {
     }
 };
 
+TestShare.prototype.applyRequestDefaults = function (options) {
+    return options;
+};
+
 module.exports = TestShare;

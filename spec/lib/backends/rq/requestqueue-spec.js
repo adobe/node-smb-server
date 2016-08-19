@@ -15,9 +15,10 @@
  * from Adobe Systems Incorporated.
  */
  
- var testcommon = require('../../test-common');
- var requestqueue = require('../../../../lib/backends/rq/requestqueue');
- 
+var testcommon = require('../../test-common');
+var requestqueue = require('../../../../lib/backends/rq/requestqueue');
+var Path = require('path');
+
  describe("RequestQueue", function() {
     var rq, common = null;
     var testName = 'file';
@@ -109,11 +110,35 @@
         }
         callback(localPath, remoteUrl, localDestPath, remoteDestUrl);
     };
+
+    var expectEventEmitted = function (eventName, eventValue, notCalled) {
+        var verified = false;
+        var expected = true;
+        if (notCalled) {
+            expected = false;
+        }
+        if (rq.emit.calls) {
+            for (var i = 0; i < rq.emit.calls.length; i++) {
+                if (rq.emit.calls[i].args) {
+                    if (rq.emit.calls[i].args.length == 2) {
+                        if (rq.emit.calls[i].args[0] == eventName &&
+                            rq.emit.calls[i].args[1] == eventValue) {
+                            verified = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        expect(verified).toEqual(expected);
+     };
     
     beforeEach(function() {
         common = new testcommon();
 
         rq = new requestqueue({db: common.db});
+
+        spyOn(rq, 'emit').andCallThrough();
     });
 
     describe("GetRequests", function() {
@@ -193,6 +218,7 @@
              addRequest('PUT');
              rq.removeRequest(testPath, testName, function (err) {
                  expect(err).toBeFalsy();
+                 expectEventEmitted('itemupdated', Path.join(testPath, testName));
                  done();
              });
          });
@@ -200,6 +226,7 @@
          it("testRemoveRequestError", function (done) {
              rq.removeRequest(testPath, testName, function (err) {
                  expect(err).toBeTruthy();
+                 expectEventEmitted('itemupdated', Path.join(testPath, testName), true);
                  done();
              });
          });
@@ -245,6 +272,7 @@
                      expect(err).toBeFalsy();
                      expect(lookup[testName]).toEqual('PUT');
                      expect(lookup[testDestName]).toEqual('DELETE');
+                     expectEventEmitted('pathupdated', testPath);
                      done();
                  });
              });
@@ -257,6 +285,7 @@
                  rq.getRequests(testDestPath + '/sub', function (err, lookup) {
                      expect(err).toBeFalsy();
                      expect(lookup[testName]).toEqual('DELETE');
+                     expectEventEmitted('pathupdated', testPath);
                      done();
                  });
              });
@@ -273,6 +302,7 @@
                      expect(err).toBeFalsy();
                      expect(lookup[testName]).toBeFalsy();
                      expect(lookup[testDestName]).toBeFalsy();
+                     expectEventEmitted('pathupdated', testPath);
                      done();
                  });
              });
@@ -285,6 +315,7 @@
                  rq.getRequests(testPath + '/sub', function (err, lookup) {
                      expect(err).toBeFalsy();
                      expect(lookup[testName]).toBeFalsy();
+                     expectEventEmitted('pathupdated', testPath);
                      done();
                  });
              });
@@ -304,6 +335,7 @@
                          expect(err).toBeFalsy();
                          expect(lookup[testName]).toEqual('PUT');
                          expect(lookup[testDestName]).toEqual('DELETE');
+                         expectEventEmitted('pathupdated', testPath, true);
                          done();
                      });
                  });
@@ -320,6 +352,7 @@
                      rq.getRequests(testPath + '/sub', function (err, lookup) {
                          expect(err).toBeFalsy();
                          expect(lookup[testName]).toEqual('PUT');
+                         expectEventEmitted('pathupdated', testPath, true);
                          done();
                      });
                  });
@@ -337,6 +370,7 @@
                 expect(results[0].timestamp).not.toBeUndefined();
                 expect(results[0].localPrefix).toEqual(testLocalPrefix);
                 expect(results[0].remotePrefix).toEqual(testRemotePrefix);
+                expectEventEmitted('itemupdated', testFullPath, true);
                 done();
             });
         });
@@ -345,12 +379,14 @@
             addRequest('PUT');
             queueAndVerify('DELETE', function(results) {
                 expect(results.length).toEqual(0);
+                expectEventEmitted('itemupdated', testFullPath);
                 done();
             });
         });
         
         it("testQueueRequestDeletePost", function(done) {
             queueAndVerifyReplace('POST', 'DELETE', function(results) {
+                expectEventEmitted('itemupdated', testFullPath);
                 done();
             });
         });
@@ -365,6 +401,8 @@
                     }
                 }
                 expect(valid).toEqual(true);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
@@ -384,30 +422,36 @@
                 expect(results[del].method).toEqual('DELETE');
                 expect(results[del].path).toEqual(testPath);
                 expect(results[del].name).toEqual(testName);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
         
         it("testQueueRequestDeleteDelete", function(done) {
             queueAndVerifyReplace('DELETE', 'DELETE', function(results) {
+                expectEventEmitted('itemupdated', testFullPath, true);
                 done();
             });
         });
         
         it("testQueueRequestPut", function(done) {
             queueAndVerify('PUT', function(results) {
+                expectEventEmitted('itemupdated', testFullPath, true);
                 done();
             });
         });
         
         it("testQueueRequestPutPut", function(done) {
             queueAndVerifyReplace('PUT', 'PUT', function(results) {
+                expectEventEmitted('itemupdated', testFullPath);
                 done();
             });
         });
         
         it("testQueueRequestPutPost", function(done) {
             queueAndVerifyNoReplace('POST', 'PUT', function(results) {
+                expectEventEmitted('itemupdated', testFullPath);
                 done();
             });
         });
@@ -424,6 +468,8 @@
                         verified = true;
                     }
                 }
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 expect(verified).toEqual(true);
                 done();
             });
@@ -442,48 +488,59 @@
                     }
                 }
                 expect(verified).toEqual(true);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
         
         it("testQueueRequestPutDelete", function(done) {
             queueAndVerifyReplace('DELETE', 'POST', function(results) {
+                expectEventEmitted('itemupdated', testFullPath, true);
                 done();
             });
         });
         
         it("testQueueRequestPost", function(done) {
             queueAndVerify('POST', function(results) {
+                expectEventEmitted('itemupdated', testFullPath, true);
                 done();
             });
         });
         
         it("testQueueRequestPostPut", function(done) {
             queueAndVerifyNoReplace('PUT', 'POST', function(results) {
+                expectEventEmitted('itemupdated', testFullPath);
                 done();
             });
         });
         
         it("testQueueRequestPostPost", function(done) {
             queueAndVerifyReplace('POST', 'POST', function(results) {
+                expectEventEmitted('itemupdated', testFullPath);
                 done();
             });
         });
         
         it("testQueueRequestPostMove", function(done) {
             queueAndVerifyMethod('MOVE', 'POST', 'POST', function(results) {
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
         
         it("testQueueRequestPostCopy", function(done) {
             queueAndVerifyMethod('COPY', 'POST', 'POST', function(results) {
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
         
         it("testQueueRequestPostDelete", function(done) {
             queueAndVerifyReplace('DELETE', 'POST', function(results) {
+                expectEventEmitted('itemupdated', testFullPath, true);
                 done();
             });
         });
@@ -508,6 +565,8 @@
                 expect(del.name).toEqual(testName);
                 expect(put.timestamp).not.toBeUndefined();
 
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
@@ -523,6 +582,8 @@
                     }
                 }
                 expect(verified).toEqual(true);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
@@ -530,6 +591,8 @@
         it("testQueueRequestMovePost", function(done) {
             queueAndVerifyReplace('MOVE', 'POST', function(docs) {
                 expect(docs.length).toEqual(2);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
@@ -537,6 +600,8 @@
         it("testQueueRequestMoveMove", function(done) {
             queueAndVerifyMethod('MOVE', 'MOVE', 'DELETE', function(docs) {
                 expect(docs.length).toEqual(2);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath);
                 done();
             });
         });
@@ -544,6 +609,8 @@
         it("testQueueRequestMoveCopy", function(done) {
             queueAndVerifyMethod('COPY', 'MOVE', 'DELETE', function(docs) {
                 expect(docs.length).toEqual(2);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath);
                 done();
             });
         });
@@ -551,6 +618,8 @@
         it("testQueueRequestMoveDelete", function(done) {
             queueAndVerifyMethod('DELETE', 'MOVE', 'DELETE', function(docs) {
                 expect(docs.length).toEqual(2);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
@@ -562,6 +631,8 @@
                 expect(docs[0].path).toEqual(testDestPath);
                 expect(docs[0].name).toEqual(testDestName);
                 expect(docs[0].timestamp).not.toBeUndefined();
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
@@ -580,6 +651,8 @@
                 }
                 expect(dest).toEqual(true);
                 expect(local).toEqual(true);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
@@ -608,6 +681,8 @@
                         expect(remoteUrl1).toEqual(testDestRemote);
                         expect(localPath2).toEqual(testLocal);
                         expect(remoteUrl2).toEqual(testRemote);
+                        expectEventEmitted('itemupdated', testFullPath, true);
+                        expectEventEmitted('itemupdated', testFullDestPath, true);
                         done();
                     });
                 });
@@ -619,6 +694,8 @@
             // result in no change to the move
             queueAndVerifyMethod('MOVE', 'COPY', 'DELETE', function(docs) {
                 expect(docs.length).toEqual(2);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath);
                 done();
             });
         });
@@ -631,6 +708,8 @@
                     getDocPaths(docs[0], function (localPath, remoteUrl) {
                         expect(localPath).toEqual(testDestLocal);
                         expect(remoteUrl).toEqual(testDestRemote);
+                        expectEventEmitted('itemupdated', testFullPath, true);
+                        expectEventEmitted('itemupdated', testFullDestPath);
                         done();
                     });
                 });
@@ -642,190 +721,11 @@
             // as a move
             queueAndVerifyNoReplace('DELETE', 'COPY', function(docs) {
                 expect(docs.length).toEqual(2);
+                expectEventEmitted('itemupdated', testFullPath, true);
+                expectEventEmitted('itemupdated', testFullDestPath, true);
                 done();
             });
         });
-/*
-        describe("testQueueRequestFolder", function() {
-            it("testQueueRequestFolderPut", function (done) {
-                queueAndVerifyFolder('PUT', function (docs) {
-                    expect(docs.length).toEqual(1);
-                    expect(docs[0].method).toEqual('PUT');
-                    expect(docs[0].localPath).toEqual(testLocal);
-                    expect(docs[0].remoteUrl).toEqual(testRemote);
-                    expect(docs[0].destPath).toBeUndefined();
-                    expect(docs[0].isFolder).toBeTruthy();
-                    done();
-                });
-            });
-
-            it("testQueueRequestFolderMove", function(done) {
-                queueAndVerifyFolder('MOVE', function (docs) {
-                    expect(docs.length).toEqual(1);
-                    expect(docs[0].method).toEqual('MOVE');
-                    expect(docs[0].localPath).toEqual(testLocal);
-                    expect(docs[0].remoteUrl).toEqual(testRemote);
-                    expect(docs[0].destPath).toEqual(testDestLocal);
-                    expect(docs[0].destUrl).toEqual(testDestRemote);
-                    expect(docs[0].isFolder).toBeTruthy();
-                    done();
-                });
-            });
-
-
-            it("testQueueRequestFolderMoveDeleteDest", function(done) {
-                // if a folder is moved and then the destination is deleted, the original folder should just be deleted
-                queueAndVerifyFolder('MOVE', function (docs) {
-                    queueAndVerifyOptions({
-                        method: 'DELETE',
-                        localFile: testDestLocal,
-                        remoteFile: testDestRemote
-                    }, function(docs) {
-                        expect(docs.length).toEqual(1);
-                        expect(docs[0].method).toEqual('DELETE');
-                        expect(docs[0].localPath).toEqual(testLocal);
-                        expect(docs[0].remoteUrl).toEqual(testRemote);
-                        expect(docs[0].destPath).toBeUndefined();
-                        done();
-                    });
-                });
-            });
-
-            it("testQueueRequestFolderMoveMoveDest", function(done) {
-                // if a folder is moved and then the destination is moved again, the original folder should just be moved
-                // to the new destination
-                queueAndVerifyFolder('MOVE', function (docs) {
-                    queueAndVerifyOptions({
-                        method: 'MOVE',
-                        localFile: testDestLocal,
-                        remoteFile: testDestRemote,
-                        destLocalFile: testDestLocal + '3',
-                        destRemoteFile: testDestRemote + '3',
-                        isFolder: true
-                    }, function (docs) {
-                        expect(docs.length).toEqual(1);
-                        expect(docs[0].method).toEqual('MOVE');
-                        expect(docs[0].localPath).toEqual(testLocal);
-                        expect(docs[0].remoteUrl).toEqual(testRemote);
-                        expect(docs[0].destPath).toEqual(testDestLocal + '3');
-                        expect(docs[0].destUrl).toEqual(testDestRemote + '3');
-                        expect(docs[0].isFolder).toBeTruthy();
-                        done();
-                    });
-                });
-            });
-
-            it("testQueueRequestFolderPutMove", function (done) {
-                // if a folder is put and then moved, the put needs to be changed to the destination path
-                queueAndVerifyFolder('PUT', function (docs) {
-                    queueAndVerifyFolder('MOVE', function (docs) {
-                        expect(docs.length).toEqual(1);
-                        expect(docs[0].method).toEqual('PUT');
-                        expect(docs[0].localPath).toEqual(testDestLocal);
-                        expect(docs[0].remoteUrl).toEqual(testDestRemote);
-                        expect(docs[0].destPath).toBeFalsy();
-                        expect(docs[0].destUrl).toBeFalsy();
-                        expect(docs[0].isFolder).toBeTruthy();
-                        done();
-                    });
-                });
-            });
-
-            it("testQueueRequestFolderPutCopy", function (done) {
-                // if a folder is put and then copied, a put for the new folder needs to be added
-                queueAndVerifyFolder('PUT', function (docs) {
-                    queueAndVerifyFolder('COPY', function (docs) {
-                        expect(docs.length).toEqual(2);
-                        var hasLocal = false;
-                        var hasDest = false;
-                        for (var i = 0; i < docs.length; i++) {
-                            var lPath = null;
-                            var rPath = null;
-                            if (docs[i].localPath == testDestLocal) {
-                                hasDest = true;
-                                lPath = testDestLocal;
-                                rPath = testDestRemote;
-                            } else if (docs[i].localPath == testLocal) {
-                                hasLocal = true;
-                                lPath = testLocal;
-                                rPath = testRemote;
-                            }
-                            expect(docs[i].method).toEqual('PUT');
-                            expect(docs[i].localPath).toEqual(lPath);
-                            expect(docs[i].remoteUrl).toEqual(rPath);
-                            expect(docs[i].destPath).toBeFalsy();
-                            expect(docs[i].destUrl).toBeFalsy();
-                            expect(docs[i].isFolder).toBeTruthy();
-                        }
-                        expect(hasLocal).toBeTruthy();
-                        expect(hasDest).toBeTruthy();
-                        done();
-                    });
-                });
-            });
-
-            it("testQueueRequestFolderMovePut", function(done) {
-                // if a folder is moved and then re-created, there needs to be two actions done on the folder: the move
-                // and then a put
-                queueAndVerifyFolder('MOVE', function (docs){
-                    queueAndVerifyFolder('PUT', function (docs) {
-                        expect(docs.length).toEqual(1);
-                        expect(docs[0].method).toEqual('MOVE');
-                        expect(docs[0].localPath).toEqual(testLocal);
-                        expect(docs[0].remoteUrl).toEqual(testRemote);
-                        expect(docs[0].destPath).toEqual(testDestLocal);
-                        expect(docs[0].destUrl).toEqual(testDestRemote);
-                        expect(docs[0].isFolder).toBeTruthy();
-                        expect(docs[0].method2).toEqual('PUT');
-                        done();
-                    });
-                });
-            });
-
-            it("testQueueRequestFolderCopy", function(done) {
-                queueAndVerifyFolder('COPY', function (docs) {
-                    expect(docs.length).toEqual(1);
-                    expect(docs[0].method).toEqual('COPY');
-                    expect(docs[0].localPath).toEqual(testLocal);
-                    expect(docs[0].remoteUrl).toEqual(testRemote);
-                    expect(docs[0].destPath).toEqual(testDestLocal);
-                    expect(docs[0].destUrl).toEqual(testDestRemote);
-                    expect(docs[0].isFolder).toBeTruthy();
-                    done();
-                });
-            });
-
-            it("testQueueRequestFolderCopyDeleteDest", function(done) {
-                // if a folder is copied and then the destination folder is deleted, the copy method should be removed
-                queueAndVerifyFolder('COPY', function (docs) {
-                    queueAndVerifyOptions({
-                        method: 'DELETE',
-                        localFile: testDestLocal,
-                        remoteFile: testDestRemote
-                    }, function (docs) {
-                        expect(docs.length).toEqual(0);
-                        done();
-                    });
-                });
-            });
-
-            it("testQueueRequestFolderCopyDelete", function(done) {
-                // if a folder is copied and then the original deleted, it should be changed to a MOVE
-                queueAndVerifyFolder('COPY', function (docs) {
-                    queueAndVerify('DELETE', function (docs) {
-                        expect(docs.length).toEqual(1);
-                        expect(docs[0].method).toEqual('MOVE');
-                        expect(docs[0].localPath).toEqual(testLocal);
-                        expect(docs[0].remoteUrl).toEqual(testRemote);
-                        expect(docs[0].destPath).toEqual(testDestLocal);
-                        expect(docs[0].destUrl).toEqual(testDestRemote);
-                        expect(docs[0].isFolder).toBeTruthy();
-                        done();
-                    });
-                });
-            });
-        });
-        */
     });
  });
  

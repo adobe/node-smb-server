@@ -16,6 +16,7 @@
  */
 
 var Datastore = require('nedb');
+var events = require('events').EventEmitter;
 
 function TestCommon() {
     var self = this;
@@ -63,7 +64,12 @@ function TestCommon() {
             }
             var stream = new events();
             stream['path'] = filePath;
-            stream['pipe'] = function(other) {};
+            stream['pipe'] = function(other) {
+                if (other.emit) {
+                    other.emit('end');
+                }
+                stream.emit('end');
+            };
             return stream;
         },
         createWriteStream: function(filePath, cdate) {
