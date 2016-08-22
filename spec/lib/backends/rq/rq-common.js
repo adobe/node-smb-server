@@ -69,36 +69,6 @@ function RQCommon() {
 
 util.inherits(RQCommon, common);
 
-RQCommon.prototype.expectRemoteFile = function (file) {
-    if (file) {
-        expect((file instanceof RQFile)).toBeTruthy();
-        expect(file.damFile).toBeDefined();
-        expect(file.localFile).not.toBeDefined();
-    } else {
-        expect(false).toBeTruthy();
-    }
-};
-
-RQCommon.prototype.expectLocalFile = function (file) {
-    if (file) {
-        expect((file instanceof RQFile)).toBeTruthy();
-        expect(file.damFile).not.toBeDefined();
-        expect(file.localFile).toBeDefined();
-    } else {
-        expect(false).toBeTruthy();
-    }
-};
-
-RQCommon.prototype.expectLocalRemoteFile = function (file) {
-    if (file) {
-        expect((file instanceof RQFile)).toBeTruthy();
-        expect(file.damFile).toBeDefined();
-        expect(file.localFile).toBeDefined();
-    } else {
-        expect(false).toBeTruthy();
-    }
-};
-
 RQCommon.prototype.addDirectory = function (tree, dirName, cb) {
     tree.addDirectory(dirName, false, function (err, file) {
         expect(err).toBeFalsy();
@@ -125,6 +95,28 @@ RQCommon.prototype.addFiles = function (tree, numFiles, cb) {
         }
     };
     addTreeFile(0);
+};
+
+RQCommon.prototype.addLocalFile = function (fileName, cb) {
+    var self = this;
+    self.addFile(self.localTree, fileName, function () {
+        self.addFile(self.workTree, fileName, cb);
+    });
+};
+
+RQCommon.prototype.addLocalFiles = function (numFiles, cb) {
+    var self = this;
+    self.addFiles(self.localTree, numFiles, function () {
+        self.addFiles(self.workTree, numFiles, cb);
+    });
+};
+
+RQCommon.prototype.addLocalFileWithDates = function (path, readOnly, content, created, lastModified, cb) {
+    var self = this;
+    self.localTree.addFileWithDates(path, readOnly, content, created, lastModified, function (err) {
+        expect(err).toBeFalsy();
+        self.addFile(self.workTree, path, cb);
+    });
 };
 
 RQCommon.prototype.expectLocalFileExistExt = function (fileName, localExists, workExists, createExists, cb) {

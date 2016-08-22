@@ -42,17 +42,21 @@ describe('RQProcessor', function () {
             maxRetries: 3,
             retryDelay: 200
         };
+
+        spyOn(processor, 'emit').andCallThrough();
     });
 
     describe('RQUpdated', function () {
-        // it('testItemUpdatedNotUploading', function (done) {
-        //     c.addQueuedFile('/testfile', function () {
-        //         c.fs.setTestFile('/local/path/testfile', '/testfile');
-        //         processor.sync(config, function (err) {
-        //             expect(err).toBeFalsy();
-        //             done();
-        //         });
-        //     });
-        // });
+        it('testItemUpdatedNotUploading', function (done) {
+            c.addQueuedFile('/testfile', function () {
+                c.fs.setTestFile('/local/path/testfile', '/testfile');
+                processor.sync(config, function (err) {
+                    expect(err).toBeFalsy();
+                    c.expectLocalFileExist('/testfile', true, false, function () {
+                        c.expectQueuedMethod('/', 'testfile', false, done);
+                    });
+                });
+            });
+        });
     });
 });

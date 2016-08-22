@@ -69,6 +69,12 @@ function TestCommon() {
                     other.emit('end');
                 }
                 stream.emit('end');
+                return stream;
+            };
+            stream['on'] = function (eventName, cb) {
+                if (eventName == 'end') {
+                    cb();
+                }
             };
             return stream;
         },
