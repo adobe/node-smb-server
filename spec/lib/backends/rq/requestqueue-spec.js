@@ -80,22 +80,32 @@ var Path = require('path');
     };
     
     var queueAndVerifyNoReplace = function(oldMethod, newMethod, callback) {
-        queueAndVerifyMethod(oldMethod, newMethod, oldMethod, callback);
+        queueAndVerifyMethod(oldMethod, newMethod, oldMethod, callback, true);
     };
     
-    var queueAndVerifyMethod = function(oldMethod, newMethod, resultMethod, callback) {
-        queueAndVerify(oldMethod, function (results) {
-            queueAndVerify(newMethod, function(results) {
-                var hasResult = false;
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].method == resultMethod) {
-                        hasResult = true;
-                        break;
+    var queueAndVerifyMethod = function(oldMethod, newMethod, resultMethod, callback, sameTimestamp) {
+        queueAndVerify(oldMethod, function (oldResults) {
+            setTimeout(function () {
+                queueAndVerify(newMethod, function(results) {
+                    var resultStamp = false;
+                    for (var i = 0; i < results.length; i++) {
+                        if (results[i].method == resultMethod) {
+                            resultStamp = results[i].timestamp;
+                            break;
+                        }
                     }
-                }
-                expect(hasResult).toEqual(true);
-                callback(results);
-            });
+                    if (!sameTimestamp) {
+                        for (var i = 0; i < oldResults.length; i++) {
+                            if (oldResults[i].method == oldMethod) {
+                                expect(oldResults[i].timestamp).not.toEqual(resultStamp);
+                                break;
+                            }
+                        }
+                    }
+                    expect(resultStamp).toBeTruthy();
+                    callback(results);
+                });
+            }, 5);
         });
     };
 
@@ -159,12 +169,12 @@ var Path = require('path');
         it("testGetRequests", function(done) {
             testGetRequests(testPath, done);
         });
-    
+
         it("testGetRequestsError", function(done) {
             common.db.find = function (options, callback) {
                 callback('error!');
             };
-            
+
             rq.getRequests(testPath, function(err, lookup) {
                 expect(err).toEqual('error!');
                 expect(lookup).toBeUndefined();
@@ -179,12 +189,14 @@ var Path = require('path');
              rq.getProcessRequest(0, 3, function (err, req) {
                  expect(err).toBeFalsy();
                  var currRetries = req.retries;
-                 rq.incrementRetryCount(req.path, req.name, function (err) {
+                 var currTimestamp = req.timestamp;
+                 rq.incrementRetryCount(req.path, req.name, 0, function (err) {
                      expect(err).toBeFalsy();
 
                      rq.getProcessRequest(0, 3, function (err, req) {
                          expect(err).toBeFalsy();
                          expect(req.retries).toEqual(currRetries + 1);
+                         expect(req.timestamp).not.toEqual(currTimestamp)
                          done();
                      });
                  });

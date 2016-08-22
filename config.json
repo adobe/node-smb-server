@@ -74,7 +74,7 @@
       "expiration": 30000,
       "frequency": 3000,
       "maxRetries": 3,
-      "retryDelay": 1000,
+      "retryDelay": 10000,
       "modifiedThreshold": 100,
       "local":{
         "backend": "fs",
