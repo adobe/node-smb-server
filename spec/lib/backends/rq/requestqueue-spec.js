@@ -738,6 +738,38 @@ var Path = require('path');
                 done();
             });
         });
+
+        it("testQueueRequestDotFile", function (done) {
+            rq.queueRequest({
+                method: 'DELETE',
+                path: '/.badfile',
+                localPrefix: './localdir',
+                remotePrefix: 'http://localhost'
+            }, function(err) {
+                expect(err).toBeTruthy();
+                common.db.find({}, function (e, results) {
+                    expect(e).toBeFalsy();
+                    expect(results.length).toEqual(0);
+                    done();
+                });
+            });
+        });
+
+        it("testQueueRequestDotFolder", function (done) {
+            rq.queueRequest({
+                method: 'DELETE',
+                path: '/.badfolder/validfile',
+                localPrefix: './localdir',
+                remotePrefix: 'http://localhost'
+            }, function (err) {
+                expect(err).toBeTruthy();
+                common.db.find({}, function (e, results) {
+                    expect(e).toBeFalsy();
+                    expect(results.length).toEqual(0);
+                    done();
+                });
+            });
+        });
     });
  });
  

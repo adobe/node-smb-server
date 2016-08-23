@@ -13,6 +13,7 @@
 var RQProcessor = require('../../../../lib/backends/rq/rqprocessor');
 var RQCommon = require('./rq-common');
 var RequestQueue = require('../../../../lib/backends/rq/requestqueue');
+var Path = require('path');
 
 describe('RQProcessor', function () {
     var processor, c, rq, req, config;
@@ -57,6 +58,39 @@ describe('RQProcessor', function () {
                     });
                 });
             });
+        });
+    });
+
+    describe('Sync', function () {
+        var testDotFile = function (path, name, done) {
+            rq.getProcessRequest = function (expiration, maxRetries, cb) {
+                cb(null, {
+                    path: path,
+                    name: name,
+                    method: 'DELETE',
+                    remotePrefix: 'http://localhost:4502',
+                    localPrefix: '/somelocal'
+                });
+            };
+            rq.removeRequest = function (path, name, cb) {
+                rq.getProcessRequest = function (expiration, maxRetries, getCb) {
+                    getCb();
+                };
+                cb();
+            };
+            processor.sync(config, function (err) {
+                expect(err).toBeFalsy();
+                expect(processor.emit).toHaveBeenCalledWith('syncerr', {file: '/somelocal' + Path.join(path, name), method: 'DELETE', err: jasmine.any(String)});
+                done();
+            });
+        };
+
+        it('testSyncDotFile', function (done) {
+            testDotFile('/', '.badfile', done);
+        });
+
+        it('testSyncDotFolder', function (done) {
+            testDotFile('/.badfolder', 'testfile', done);
         });
     });
 });

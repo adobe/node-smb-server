@@ -524,6 +524,13 @@ describe('RQTree', function () {
                 });
             });
         });
+
+        it('testDeleteLocalDirectoryRoot', function (done) {
+            c.testTree.deleteLocalDirectoryRecursive('/', function (err) {
+                expect(err).toBeTruthy();
+                done();
+            });
+        });
     });
 
     describe('QueueData', function () {
@@ -545,6 +552,82 @@ describe('RQTree', function () {
             c.testTree.queueData('/.tempfile', 'PUT', false, function (err) {
                 expect(err).toBeFalsy();
                 c.expectQueuedMethod('/', '.tempfile', false, done);
+            });
+        });
+
+        it('testQueueDataTempFileDestTempFile', function (done) {
+            c.testTree.queueData('/.tempfile', 'MOVE', '/.tempfile2', function (err) {
+                expect(err).toBeFalsy();
+                c.expectQueuedMethod('/', '.tempfile', false, function () {
+                    c.expectQueuedMethod('/', '.tempfile2', false, done);
+                });
+            });
+        });
+
+        it('testQueueDataTempFileDestNormalFile', function (done) {
+            c.testTree.queueData('/.tempfile', 'MOVE', '/testfile', function (err) {
+                expect(err).toBeFalsy();
+                c.expectQueuedMethod('/', '.tempfile', false, function () {
+                    c.expectQueuedMethod('/', 'testfile', 'PUT', done);
+                });
+            });
+        });
+
+        it('testQueueDataNormalFileDestTempFile', function (done) {
+            c.addQueuedFile('/testfile', function () {
+                c.testTree.queueData('/testfile', 'MOVE', '/.tempfile', function (err) {
+                    expect(err).toBeFalsy();
+                    c.expectQueuedMethod('/', 'testfile', false, function () {
+                        c.expectQueuedMethod('/', '.tempfile', false, done);
+                    });
+                });
+            });
+        });
+
+        it('testQueueDataNormalFileDestNormalFile', function (done) {
+            c.testTree.queueData('/testfile', 'MOVE', '/testfile2', function (err) {
+                expect(err).toBeFalsy();
+                c.expectQueuedMethod('/', 'testfile', 'DELETE', function () {
+                    c.expectQueuedMethod('/', 'testfile2', 'PUT', done);
+                });
+            });
+        });
+
+        it('testQueueDataCopyTempFileDestTempFile', function (done) {
+            c.testTree.queueData('/.tempfile', 'COPY', '/.tempfile2', function (err) {
+                expect(err).toBeFalsy();
+                c.expectQueuedMethod('/', '.tempfile', false, function () {
+                    c.expectQueuedMethod('/', '.tempfile2', false, done);
+                });
+            });
+        });
+
+        it('testQueueDataCopyTempFileDestNormalFile', function (done) {
+            c.testTree.queueData('/.tempfile', 'COPY', '/testfile', function (err) {
+                expect(err).toBeFalsy();
+                c.expectQueuedMethod('/', '.tempfile', false, function () {
+                    c.expectQueuedMethod('/', 'testfile', 'PUT', done);
+                });
+            });
+        });
+
+        it('testQueueDataCopyNormalFileDestTempFile', function (done) {
+            c.addQueuedFile('/testfile', function () {
+                c.testTree.queueData('/testfile', 'COPY', '/.tempfile', function (err) {
+                    expect(err).toBeFalsy();
+                    c.expectQueuedMethod('/', 'testfile', 'PUT', function () {
+                        c.expectQueuedMethod('/', '.tempfile', false, done);
+                    });
+                });
+            });
+        });
+
+        it('testQueueDataCopyNormalFileDestNormalFile', function (done) {
+            c.testTree.queueData('/testfile', 'COPY', '/testfile2', function (err) {
+                expect(err).toBeFalsy();
+                c.expectQueuedMethod('/', 'testfile', false, function () {
+                    c.expectQueuedMethod('/', 'testfile2', 'PUT', done);
+                });
             });
         });
     });
@@ -618,6 +701,15 @@ describe('RQTree', function () {
                         expect(exists).toBeTruthy();
                         c.expectQueuedMethod('/', 'testfile', 'DELETE', done);
                     });
+                });
+            });
+        });
+
+        it('testDeleteTempFile', function (done) {
+            c.addFile(c.localTree, '/.tempfile.ext', function (file) {
+                c.testTree.delete('/.tempfile.ext', function (err) {
+                    expect(err).toBeFalsy();
+                    c.expectQueuedMethod('/', '.tempfile.ext', false, done);
                 });
             });
         });
