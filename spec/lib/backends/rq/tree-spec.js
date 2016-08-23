@@ -531,6 +531,42 @@ describe('RQTree', function () {
                 done();
             });
         });
+
+        it('testDeleteLocalDirectoryRecursiveWork', function (done) {
+            c.addDirectory(c.remoteTree, '/removeme', function () {
+                c.addDirectory(c.remoteTree, '/removeme/sub', function () {
+                    c.addFile(c.remoteTree, '/removeme/file1', function () {
+                        c.addFile(c.remoteTree, '/removeme/sub/file2', function () {
+                            c.testTree.open('/removeme/file1', function (err, file) {
+                                expect(err).toBeFalsy();
+                                file.cacheFile(function (err, cached) {
+                                    expect(err).toBeFalsy();
+                                    cached.setLastModified(cached.lastModified() + 100000);
+                                    cached.close(function (err) {
+                                        expect(err).toBeFalsy();
+                                        c.testTree.open('/removeme/sub/file2', function (err, file) {
+                                            expect(err).toBeFalsy();
+                                            file.cacheFile(function (err, cached) {
+                                                c.addQueuedFile('/removeme/file3', function () {
+                                                    c.testTree.deleteLocalDirectoryRecursive('/removeme', function (err) {
+                                                        expect(err).toBeFalsy();
+                                                        c.expectPathExist(c.workTree, '/removeme', false, function () {
+                                                            expect(c.testShare.emit).toHaveBeenCalledWith('syncconflict', {file: '/removeme/file3'});
+                                                            expect(c.testShare.emit.calls.length).toEqual(2);
+                                                            done();
+                                                        });
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 
     describe('QueueData', function () {
