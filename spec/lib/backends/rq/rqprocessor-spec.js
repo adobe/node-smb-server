@@ -16,24 +16,37 @@ var RequestQueue = require('../../../../lib/backends/rq/requestqueue');
 var Path = require('path');
 
 describe('RQProcessor', function () {
-    var processor, c, rq, req, config;
+    var processor, c, rq, req, config, nextStatusCode;
 
     beforeEach(function () {
         c = new RQCommon();
-        rq = new RequestQueue({db: c.db});
         req = function (options, cb) {
-            return {
-                emit: function (toEmit) {
-                    if (toEmit == 'end') {
-                        cb(null, {
-                            statusCode: 200
-                        }, '');
+            var statusCode = 200;
+            if (nextStatusCode) {
+                statusCode = nextStatusCode;
+                nextStatusCode = false;
+            }
+            if (options.method != 'POST' && options.method != 'PUT') {
+                cb(null, {
+                    statusCode: statusCode
+                }, '');
+            } else {
+                return {
+                    emit: function (toEmit) {
+                        if (toEmit == 'end') {
+                            cb(null, {
+                                statusCode: statusCode
+                            }, '');
+                        }
+                    },
+                    abort: function () {
+                        this.aborted = true;
                     }
-                }
-            };
+                };
+            }
         };
 
-        processor = new RQProcessor(c.testTree, rq, {
+        processor = new RQProcessor(c.testTree, {
             fs: c.fs,
             request: req
         });
@@ -41,29 +54,89 @@ describe('RQProcessor', function () {
         config = {
             expiration: 0,
             maxRetries: 3,
-            retryDelay: 200
+            retryDelay: 200,
+            frequency: 500
         };
 
         spyOn(processor, 'emit').andCallThrough();
     });
 
     describe('RQUpdated', function () {
+        it('testItemUpdatedUploading', function (done) {
+            c.addQueuedFile('/testfile', function () {
+                c.fs.setTestFile('/local/path/testfile', '/testfile');
+                c.setPipeDelay(1000);
+                processor.sync(config, function (err) {
+                    expect(err).toBeFalsy();
+                    expect(processor.emit).toHaveBeenCalledWith('syncabort', {file: '/testfile'});
+                    expect(processor.emit).toHaveBeenCalledWith('syncend', {file: '/local/path/testfile', method: 'POST'});
+                    done();
+                });
+                setTimeout(function () {
+                    c.testTree.rq.queueRequest({
+                        method: 'POST',
+                        path: '/testfile',
+                        localPrefix: '/somelocal',
+                        remotePrefix: 'http://localhost:4502'
+                    }, function (err) {
+                        // do nothing
+                    });
+                }, 500);
+            });
+        });
+
         it('testItemUpdatedNotUploading', function (done) {
             c.addQueuedFile('/testfile', function () {
                 c.fs.setTestFile('/local/path/testfile', '/testfile');
-                processor.sync(config, function (err) {
+                c.testTree.rq.queueRequest({
+                    method: 'POST',
+                    path: '/testfile',
+                    localPrefix: '/somelocal',
+                    remotePrefix: 'http://localhost:4502'
+                }, function (err) {
                     expect(err).toBeFalsy();
-                    c.expectLocalFileExist('/testfile', true, false, function () {
-                        c.expectQueuedMethod('/', 'testfile', false, done);
+                    c.expectQueuedMethod('/', 'testfile', 'PUT', function () {
+                        expect(processor.emit).not.toHaveBeenCalledWith('syncabort', {file: '/testfile'});
+                        done();
                     });
                 });
             });
+        });
+
+        var testPathUpdated = function (path, removePath, done) {
+            c.addQueuedFile(path, function () {
+                c.fs.setTestFile('/local/path' + path, path);
+                c.setPipeDelay(1000);
+                processor.sync(config, function (err) {
+                    expect(err).toBeFalsy();
+                    expect(processor.emit).toHaveBeenCalledWith('syncabort', {file: path});
+                    expect(processor.emit).not.toHaveBeenCalledWith('syncend', {file: '/local/path' + path, method:'POST'});
+                    done();
+                });
+                setTimeout(function () {
+                    c.testTree.rq.removePath(removePath, function (err) {
+                        // do nothing
+                    });
+                }, 500);
+            });
+        };
+
+        it('testPathUpdatedUploading', function (done) {
+            testPathUpdated('/testfile', '/', done);
+        });
+
+        it('testPathUpdatedUploadingSubPath', function (done) {
+            testPathUpdated('/dir/testfile', '/', done);
+        });
+
+        it('testPathUpdatedUploadingSubPathNotRoot', function (done) {
+            testPathUpdated('/dir/testfile', '/dir', done);
         });
     });
 
     describe('Sync', function () {
         var testDotFile = function (path, name, done) {
-            rq.getProcessRequest = function (expiration, maxRetries, cb) {
+            c.testTree.rq.getProcessRequest = function (expiration, maxRetries, cb) {
                 cb(null, {
                     path: path,
                     name: name,
@@ -72,8 +145,8 @@ describe('RQProcessor', function () {
                     localPrefix: '/somelocal'
                 });
             };
-            rq.removeRequest = function (path, name, cb) {
-                rq.getProcessRequest = function (expiration, maxRetries, getCb) {
+            c.testTree.rq.completeRequest = function (path, name, cb) {
+                c.testTree.rq.getProcessRequest = function (expiration, maxRetries, getCb) {
                     getCb();
                 };
                 cb();
@@ -85,12 +158,153 @@ describe('RQProcessor', function () {
             });
         };
 
+        var addLocalCachedFile = function (path, cb) {
+            c.addFile(c.remoteTree, '/testfile', function () {
+                c.fs.setTestFile('/local/path' + path, path);
+                c.testTree.open('/testfile', function (err, file) {
+                    expect(err).toBeFalsy();
+                    file.cacheFile(function (err) {
+                        expect(err).toBeFalsy();
+                        cb(file);
+                    });
+                });
+            });
+        };
+
+        it('testSyncCreate', function (done) {
+            c.addQueuedFile('/testfile', function () {
+                c.fs.setTestFile('/local/path/testfile', '/testfile');
+                processor.sync(config, function (err) {
+                    expect(err).toBeFalsy();
+                    c.expectLocalFileExist('/testfile', true, false, function () {
+                        c.expectQueuedMethod('/', 'testfile', false, function () {
+                            expect(processor.emit).toHaveBeenCalledWith('syncstart', {file: '/local/path/testfile', method: 'POST'});
+                            expect(processor.emit).toHaveBeenCalledWith('syncend', {file: '/local/path/testfile', method: 'POST'});
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
+        it('testSyncUpdate', function (done) {
+            addLocalCachedFile('/testfile', function (file) {
+                file.setLength(100, function (err) {
+                    expect(err).toBeFalsy();
+                    file.close(function (err) {
+                        expect(err).toBeFalsy();
+                        processor.sync(config, function (err) {
+                            expect(err).toBeFalsy();
+                            c.expectQueuedMethod('/', 'testfile', false, function () {
+                                expect(processor.emit).toHaveBeenCalledWith('syncstart', {file: '/local/path/testfile', method: 'PUT'});
+                                expect(processor.emit).toHaveBeenCalledWith('syncend', {file: '/local/path/testfile', method: 'PUT'});
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
+        it('testSyncDelete', function (done) {
+            addLocalCachedFile('/testfile', function (file) {
+                c.testTree.delete('/testfile', function (err) {
+                    expect(err).toBeFalsy();
+                    processor.sync(config, function (err) {
+                        expect(err).toBeFalsy();
+                        c.expectQueuedMethod('/', 'testfile', false, function () {
+                            expect(processor.emit).toHaveBeenCalledWith('syncstart', {file: '/local/path/testfile', method: 'DELETE'});
+                            expect(processor.emit).toHaveBeenCalledWith('syncend', {file: '/local/path/testfile', method: 'DELETE'});
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
         it('testSyncDotFile', function (done) {
             testDotFile('/', '.badfile', done);
         });
 
         it('testSyncDotFolder', function (done) {
             testDotFile('/.badfolder', 'testfile', done);
+        });
+
+        it('testSyncErrorStatusCode', function (done) {
+            c.addQueuedFile('/testfile', function (file) {
+                c.fs.setTestFile('/local/path/testfile', '/testfile');
+                nextStatusCode = 404;
+                processor.sync(config, function (err) {
+                    expect(err).toBeFalsy();
+                    c.expectQueuedMethod('/', 'testfile', 'PUT', function () {
+                        expect(processor.emit).toHaveBeenCalledWith('syncerr', {file: '/local/path/testfile', method: 'POST', err: jasmine.any(String)});
+                        c.testTree.rq.queueRequest({
+                            method: 'DELETE',
+                            path: '/testfile',
+                            localPrefix: '/local/path',
+                            remotePrefix: 'http://localhost:4502'
+                        }, function (err) {
+                            expect(err).toBeFalsy();
+                            expect(processor.emit).not.toHaveBeenCalledWith('syncabort', {file:any(String)});
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    describe('StartStop', function () {
+        it('testStartStop', function (done) {
+            c.addQueuedFile('/testfile', function (file) {
+                c.fs.setTestFile('/local/path/testfile', '/testfile');
+                c.testTree.rq.queueRequest({
+                    method: 'DELETE',
+                    path: '/testdelete',
+                    localPrefix: '/local/path',
+                    remotePrefix: 'http://localhost:4502'
+                }, function (err) {
+                    expect(err).toBeFalsy();
+                    c.testTree.rq.incrementRetryCount('/', 'testdelete', 400, function (err) {
+                        expect(err).toBeFalsy();
+                        processor.start(config);
+                        setTimeout(function () {
+                            processor.stop();
+                            expect(processor.emit).toHaveBeenCalledWith('syncstart', {file: '/local/path/testfile', method: 'POST'});
+                            expect(processor.emit).toHaveBeenCalledWith('syncend', {file: '/local/path/testfile', method: 'POST'});
+                            expect(processor.emit).toHaveBeenCalledWith('syncstart', {file: '/local/path/testdelete', method: 'DELETE'});
+                            expect(processor.emit).toHaveBeenCalledWith('syncend', {file: '/local/path/testdelete', method: 'DELETE'});
+                            done();
+                        }, 1000);
+                    });
+                });
+            });
+        });
+
+        it('testStartStopPurgeRequests', function (done) {
+            c.addQueuedFile('/testfile', function (file) {
+                config.maxRetries = 0;
+                processor.start(config);
+                setTimeout(function () {
+                    processor.stop();
+                    expect(processor.emit).toHaveBeenCalledWith('purged', any(Object));
+                    expect(processor.emit).not.toHaveBeenCalledWith('syncstart', any(Object));
+                    done();
+                }, 200);
+            });
+        });
+
+        it('testStartStopCancelRequest', function (done) {
+            c.addQueuedFile('/testfile', function (file) {
+                c.fs.setTestFile('/local/path/testfile', 'test');
+                c.setPipeDelay(1000);
+                processor.start(config);
+                setTimeout(function () {
+                    processor.stop();
+                    expect(processor.emit).toHaveBeenCalledWith('syncabort', {file: '/testfile'});
+                    done();
+                }, 200);
+            });
         });
     });
 });

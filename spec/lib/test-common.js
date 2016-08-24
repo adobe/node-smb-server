@@ -20,6 +20,11 @@ var events = require('events').EventEmitter;
 
 function TestCommon() {
     var self = this;
+    var pipeDelay = 0;
+
+    self.setPipeDelay = function (delay) {
+        self.pipeDelay = delay;
+    };
 
     self.fs = {
         setTestFile: function(filePath, data) {
@@ -65,16 +70,23 @@ function TestCommon() {
             var stream = new events();
             stream['path'] = filePath;
             stream['pipe'] = function(other) {
-                if (other.emit) {
-                    other.emit('end');
+                var pipeStream = new events();
+                var emitEnd = function () {
+                    if (!other.aborted) {
+                        if (other.emit) {
+                            other.emit('end');
+                        }
+                        pipeStream.emit('end');
+                    }
+                };
+
+                if (self.pipeDelay) {
+                    setTimeout(emitEnd, self.pipeDelay);
+                } else {
+                    emitEnd();
                 }
-                stream.emit('end');
-                return stream;
-            };
-            stream['on'] = function (eventName, cb) {
-                if (eventName == 'end') {
-                    cb();
-                }
+
+                return pipeStream;
             };
             return stream;
         },

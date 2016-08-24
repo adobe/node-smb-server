@@ -320,7 +320,7 @@ var Path = require('path');
              });
          });
 
-         it("testRemotePathSub", function (done) {
+         it("testRemovePathSub", function (done) {
              addRequestOptions('DELETE', testPath + '/sub', testName, testLocalPrefix, testRemotePrefix);
              rq.removePath(testPath, function (err) {
                  expect(err).toBeFalsy();
@@ -328,6 +328,19 @@ var Path = require('path');
                      expect(err).toBeFalsy();
                      expect(lookup[testName]).toBeFalsy();
                      expectEventEmitted('pathupdated', testPath);
+                     done();
+                 });
+             });
+         });
+
+         it("testRemovePathRoot", function (done) {
+             addRequest('PUT');
+             rq.removePath('/', function (err) {
+                 expect(err).toBeFalsy();
+                 rq.getRequests(testPath, function (err, lookup) {
+                     expect(err).toBeFalsy();
+                     expect(lookup[testName]).toBeFalsy();
+                     expectEventEmitted('pathupdated', '/');
                      done();
                  });
              });
