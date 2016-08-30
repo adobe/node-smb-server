@@ -16,11 +16,13 @@ var RequestQueue = require('../../../../lib/backends/rq/requestqueue');
 var Path = require('path');
 
 describe('RQProcessor', function () {
-    var processor, c, rq, req, config, nextStatusCode;
+    var processor, c, rq, req, config, nextStatusCode, requestedUrls;
 
     beforeEach(function () {
+        requestedUrls = [];
         c = new RQCommon();
         req = function (options, cb) {
+            requestedUrls.push(options.url);
             var statusCode = 200;
             if (nextStatusCode) {
                 statusCode = nextStatusCode;
@@ -247,6 +249,34 @@ describe('RQProcessor', function () {
                             expect(err).toBeFalsy();
                             expect(processor.emit).not.toHaveBeenCalledWith('syncabort', {file:any(String)});
                             done();
+                        });
+                    });
+                });
+            });
+        });
+
+        it('testSyncEncoded', function (done) {
+            var remoteEncodedName = '/%EC%9D%B4%EB%91%90%E5%90%8F%E8%AE%80.jpg';
+            var remoteFileName = decodeURI(remoteEncodedName);
+            var localFileNameOnly = decodeURI('%E1%84%8B%E1%85%B5%E1%84%83%E1%85%AE%E5%90%8F%E8%AE%80.jpg');
+            var localFileName = '/' + localFileNameOnly;
+            c.fs.setTestFile('/local/path' + localFileName, 'content');
+            c.addFile(c.remoteTree, remoteFileName, function () {
+                c.addFile(c.localTree, localFileName, function () {
+                    c.addFile(c.workTree, localFileName, function () {
+                        c.testTree.open(localFileName, function (err, rqFile) {
+                            expect(err).toBeFalsy();
+                            rqFile.setLength(10, function (err) {
+                                expect(err).toBeFalsy();
+                                rqFile.close(function (err) {
+                                    expect(err).toBeFalsy();
+                                    processor.sync(config, function (err) {
+                                        expect(err).toBeFalsy();
+                                        expect(requestedUrls.indexOf('http://localhost:4502' + remoteEncodedName)).not.toEqual(-1);
+                                        c.expectQueuedMethod('/', localFileNameOnly, false, done);
+                                    });
+                                });
+                            });
                         });
                     });
                 });

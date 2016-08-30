@@ -470,6 +470,45 @@ describe('RQTree', function () {
                 });
             });
         });
+
+        it('testListEncoding', function (done) {
+            // 이두吏讀
+            var remoteFileName = decodeURI('/%EC%9D%B4%EB%91%90%E5%90%8F%E8%AE%80.jpg');
+            var localFileName = decodeURI('/%E1%84%8B%E1%85%B5%E1%84%83%E1%85%AE%E5%90%8F%E8%AE%80.jpg');
+            c.addFile(c.remoteTree, remoteFileName, function () {
+                c.addFile(c.localTree, localFileName, function () {
+                    c.addFile(c.workTree, localFileName, function () {
+                        c.expectLocalFileExist(localFileName, true, false, function () {
+                            c.testTree.list('/', function (err, files) {
+                                expect(err).toBeFalsy();
+                                expect(files.length).toEqual(1);
+                                c.expectLocalFileExist(localFileName, true, false, done);
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
+        it('testListEncodingDeleted', function (done) {
+            var remoteFileName = decodeURI('/%EC%9D%B4%EB%91%90%E5%90%8F%E8%AE%80.jpg');
+            var localFileName = decodeURI('/%E1%84%8B%E1%85%B5%E1%84%83%E1%85%AE%E5%90%8F%E8%AE%80.jpg');
+            c.addFile(c.remoteTree, remoteFileName, function () {
+                c.addFile(c.localTree, localFileName, function () {
+                    c.addFile(c.workTree, localFileName, function () {
+                        c.expectLocalFileExist(localFileName, true, false, function () {
+                            c.testTree.delete(localFileName, function (err) {
+                                c.testTree.list('/', function (err, files) {
+                                    expect(err).toBeFalsy();
+                                    expect(files.length).toEqual(0);
+                                    c.expectLocalFileExist(localFileName, false, false, done);
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 
     describe('DeleteLocalDirectoryRecursive', function () {
@@ -856,12 +895,18 @@ describe('RQTree', function () {
         it('testRenameFolderLocal', function (done) {
             c.addDirectory(c.remoteTree, '/test', function () {
                 c.addDirectory(c.localTree, '/test', function () {
-                    c.testTree.rename('/test', '/test2', function (err) {
-                        expect(err).toBeFalsy();
-                        c.expectPathExist(c.remoteTree, '/test', false, function() {
-                            c.expectPathExist(c.localTree, '/test', false, function () {
-                                c.expectPathExist(c.remoteTree, '/test2', true, function() {
-                                    c.expectPathExist(c.localTree, '/test2', true, done);
+                    c.addDirectory(c.workTree, '/test', function () {
+                        c.testTree.rename('/test', '/test2', function (err) {
+                            expect(err).toBeFalsy();
+                            c.expectPathExist(c.remoteTree, '/test', false, function() {
+                                c.expectPathExist(c.localTree, '/test', false, function () {
+                                    c.expectPathExist(c.remoteTree, '/test2', true, function() {
+                                        c.expectPathExist(c.localTree, '/test2', true, function (){
+                                            c.expectPathExist(c.workTree, '/test', false, function () {
+                                                c.expectPathExist(c.workTree, '/test2', true, done);
+                                            });
+                                        });
+                                    });
                                 });
                             });
                         });
