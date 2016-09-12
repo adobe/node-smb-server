@@ -1,7 +1,7 @@
 {
   "name": "node-smb-server",
   "description": "pure javascript SMB server implementation",
-  "version": "0.10.7",
+  "version": "0.10.9",
   "main": "index.js",
   "scripts": {
     "start": "node ./index.js"
