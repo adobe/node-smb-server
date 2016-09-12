@@ -43,7 +43,8 @@ function RQCommon() {
             path: '/work/path'
         },
         localTree: self.localTree,
-        tree: self.remoteTree
+        tree: self.remoteTree,
+        contentCacheTTL: 200
     };
     self.testShare = new RQShare(
         'rq',

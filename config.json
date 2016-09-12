@@ -76,6 +76,7 @@
       "maxRetries": 3,
       "retryDelay": 10000,
       "modifiedThreshold": 100,
+      "tmpPath": "./smbrqroot",
       "local":{
         "backend": "fs",
         "description": "fs test share local",

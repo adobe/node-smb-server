@@ -19,6 +19,8 @@ describe('RQTree', function () {
 
     beforeEach(function () {
         c = new RQCommon();
+
+        spyOn(c.remoteTree, 'list').andCallThrough();
     });
 
     describe('Exists', function () {
@@ -344,7 +346,7 @@ describe('RQTree', function () {
 
         it('testListRemoteOnly', function (done) {
             c.addFiles(c.remoteTree, 3, function () {
-                c.testTree.list('/', function (err, files) {
+                c.testTree.list('/*', function (err, files) {
                     expect(err).toBeFalsy();
                     expectHasFile(files, '/testfile1');
                     expectHasFile(files, '/testfile2');
@@ -358,7 +360,7 @@ describe('RQTree', function () {
             c.addFile(c.remoteTree, '/testremote', function () {
                 c.testTree.createFile('/testfile1', function (err, file) {
                     expect(err).toBeFalsy();
-                    c.testTree.list('/', function (err, files) {
+                    c.testTree.list('/*', function (err, files) {
                         expect(err).toBeFalsy();
                         expectHasFile(files, '/testremote');
                         expectHasFile(files, '/testfile1');
@@ -371,7 +373,7 @@ describe('RQTree', function () {
         it('testListLocalNoCreatedUnsafeDelete', function (done) {
             var currTime = new Date().getTime();
             c.addLocalFileWithDates('/testlocal', false, 'content', currTime, currTime + 20000, function (file) {
-                c.testTree.list('/', function (err, files) {
+                c.testTree.list('/*', function (err, files) {
                     expect(err).toBeFalsy();
                     expect(files.length).toEqual(1);
                     expect(c.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
@@ -383,7 +385,7 @@ describe('RQTree', function () {
         it('testListLocalTempFile', function (done) {
             c.addFiles(c.remoteTree, 3, function () {
                 c.addFile(c.localTree, '/.tempfile', function () {
-                    c.testTree.list('/', function (err, files) {
+                    c.testTree.list('/*', function (err, files) {
                         expect(err).toBeFalsy();
                         expect(files.length).toEqual(4);
                         expectHasFile(files, '/.tempfile');
@@ -397,7 +399,7 @@ describe('RQTree', function () {
             c.addFiles(c.remoteTree, 3, function () {
                 c.testTree.delete('/testfile1', function (err) {
                     expect(err).toBeFalsy();
-                    c.testTree.list('/', function (err, files) {
+                    c.testTree.list('/*', function (err, files) {
                         expect(err).toBeFalsy();
                         expect(files.length).toEqual(2);
                         expectHasFile(files, '/testfile2');
@@ -413,7 +415,7 @@ describe('RQTree', function () {
                 c.addLocalFiles(3, function () {
                     c.remoteTree.delete('/testfile1', function (err) {
                         expect(err).toBeFalsy();
-                        c.testTree.list('/', function (err, files) {
+                        c.testTree.list('/*', function (err, files) {
                             expect(err).toBeFalsy();
                             expect(files.length).toEqual(2);
                             expectHasFile(files, '/testfile2');
@@ -434,7 +436,7 @@ describe('RQTree', function () {
                     c.addLocalFileWithDates('/testfile3', false, 'content', currTime, currTime + 20000, function (file) {
                         c.remoteTree.delete('/testfile3', function (err) {
                             expect(err).toBeFalsy();
-                            c.testTree.list('/', function (err, files) {
+                            c.testTree.list('/*', function (err, files) {
                                 expect(err).toBeFalsy();
                                 expect(files.length).toEqual(3);
                                 expectHasFile(files, '/testfile1');
@@ -457,7 +459,7 @@ describe('RQTree', function () {
                     c.addDirectory(c.localTree, '/test', function () {
                         c.remoteTree.deleteDirectory('/test', function (err) {
                             expect(err).toBeFalsy();
-                            c.testTree.list('/', function (err, items) {
+                            c.testTree.list('/*', function (err, items) {
                                 expect(err).toBeFalsy();
                                 expect(items.length).toEqual(3);
                                 expectHasFile(items, '/testfile1');
@@ -479,7 +481,7 @@ describe('RQTree', function () {
                 c.addFile(c.localTree, localFileName, function () {
                     c.addFile(c.workTree, localFileName, function () {
                         c.expectLocalFileExist(localFileName, true, false, function () {
-                            c.testTree.list('/', function (err, files) {
+                            c.testTree.list('/*', function (err, files) {
                                 expect(err).toBeFalsy();
                                 expect(files.length).toEqual(1);
                                 c.expectLocalFileExist(localFileName, true, false, done);
@@ -498,7 +500,7 @@ describe('RQTree', function () {
                     c.addFile(c.workTree, localFileName, function () {
                         c.expectLocalFileExist(localFileName, true, false, function () {
                             c.testTree.delete(localFileName, function (err) {
-                                c.testTree.list('/', function (err, files) {
+                                c.testTree.list('/*', function (err, files) {
                                     expect(err).toBeFalsy();
                                     expect(files.length).toEqual(0);
                                     c.expectLocalFileExist(localFileName, false, false, done);
@@ -507,6 +509,72 @@ describe('RQTree', function () {
                         });
                     });
                 });
+            });
+        });
+
+        it('testListCaching', function (done) {
+            c.addFile(c.remoteTree, '/testfile', function () {
+                c.testTree.list('/*', function (err, files) {
+                    expect(err).toBeFalsy();
+                    expect(files.length).toEqual(1);
+                    expect(c.remoteTree.list.calls.length).toEqual(1);
+
+                    c.testTree.list('/*', function (err, files) {
+                        // should be cached now
+                        expect(err).toBeFalsy();
+                        expect(files.length).toEqual(1);
+                        expect(c.remoteTree.list.calls.length).toEqual(1);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it('testListCachingExpired', function (done) {
+            c.addFile(c.remoteTree, '/testfile', function () {
+                c.testTree.list('/*', function (err, files) {
+                    expect(err).toBeFalsy();
+                    expect(files.length).toEqual(1);
+                    expect(c.remoteTree.list.calls.length).toEqual(1);
+
+                    setTimeout(function () {
+                        c.testTree.list('/*', function (err, files) {
+                            expect(err).toBeFalsy();
+                            expect(files.length).toEqual(1);
+                            expect(c.remoteTree.list.calls.length).toEqual(2);
+                            done();
+                        });
+                    }, 500);
+                });
+            });
+        });
+
+        it('testListFileRemote', function (done) {
+            c.addFile(c.remoteTree, '/testfile', function () {
+                c.testTree.list('/testfile', function (err, files) {
+                    expect(err).toBeFalsy();
+                    expect(files.length).toEqual(1);
+                    done();
+                });
+            });
+        });
+
+        it('testListFileLocal', function (done) {
+            c.addFile(c.localTree, '/testfile', function () {
+                c.testTree.list('/testfile', function (err, files) {
+                    expect(err).toBeFalsy();
+                    expect(files.length).toEqual(1);
+                    done();
+                });
+            });
+        });
+
+        it('testListFileTempNoExist', function (done) {
+            c.testTree.list('/.tempfile', function (err, files) {
+                expect(err).toBeFalsy();
+                expect(files.length).toEqual(0);
+                expect(c.remoteTree.list).not.toHaveBeenCalled();
+                done();
             });
         });
     });

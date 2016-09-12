@@ -152,10 +152,17 @@ TestTree.prototype.open = function (name, cb) {
 
 TestTree.prototype.list = function (pattern, cb) {
     var self = this;
+    var filter;
     if (pattern.charAt(pattern.length - 1) == '*') {
         pattern = pattern.substr(0, pattern.length - 2);
+        if (pattern == '') {
+            pattern = '/';
+        }
+        filter = {path: pattern};
+    } else {
+        filter = {path: utils.getParentPath(pattern), name: utils.getPathName(pattern)};
     }
-    self.entities.find({path: pattern}, function (err, docs) {
+    self.entities.find(filter, function (err, docs) {
         if (err) {
             cb(err);
         } else {
