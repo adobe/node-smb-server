@@ -11,7 +11,6 @@
  */
 
 var Tree = require('../../../../lib/spi/tree');
-var TestTree = require('./tree');
 var TestFile = require('./file');
 var Datastore = require('nedb');
 var utils = require('../../../../lib/utils');
