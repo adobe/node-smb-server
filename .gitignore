@@ -1,4 +1,6 @@
 smbroot/
+smbrqroot/
+smbrqwork/
 
 # ide files
 .cproject

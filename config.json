@@ -57,6 +57,44 @@
       "maxSockets": 64,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000
+    },
+    "RQ": {
+      "backend": "rq",
+      "description": "rq-based test share",
+      "host": "localhost",
+      "port": 4502,
+      "protocol": "http:",
+      "auth": {
+        "user": "admin",
+        "pass": "admin"
+      },
+      "maxSockets": 64,
+      "contentCacheTTL": 30000,
+      "binCacheTTL": 600000,
+      "expiration": 30000,
+      "frequency": 3000,
+      "maxRetries": 3,
+      "retryDelay": 10000,
+      "modifiedThreshold": 100,
+      "tmpPath": "./smbrqroot",
+      "local":{
+        "backend": "fs",
+        "description": "fs test share local",
+        "path": "./smbrqroot"
+      },
+      "work": {
+        "backend": "fs",
+        "description": "fs test share work",
+        "path": "./smbrqwork"
+      },
+      "events": [
+        "syncfilestart",
+        "syncfileend",
+        "syncfileerr",
+        "syncerr",
+        "syncpurged",
+        "syncconflict"
+      ]
     }
   }
 }
