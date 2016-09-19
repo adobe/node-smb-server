@@ -45,6 +45,10 @@ TestTree.prototype.createFileInstance = function (filePath, content, fileLength,
 };
 
 TestTree.prototype.isTempFileName = function (name) {
+    return false;
+};
+
+TestTree.prototype.isTempFileNameForce = function (name) {
     name = utils.getPathName(name);
     if (name) {
         if (name.length > 0) {

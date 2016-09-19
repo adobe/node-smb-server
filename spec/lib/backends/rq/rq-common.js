@@ -25,7 +25,7 @@ function RQCommon() {
 
     self.remoteTree = new TestTree();
     self.localTree = new TestTree();
-    self.workTree = new TestTree();
+    self.localWorkTree = new TestTree();
     self.tempFilesTree = new TestTree();
 
     self.config = {
@@ -47,17 +47,20 @@ function RQCommon() {
         new TestShare('test', self.config),
         self.remoteTree,
         self.localTree,
-        self.workTree);
+        self.localWorkTree);
     self.testTree = new RQTree(
         self.testShare,
         self.remoteTree,
         {
             localTree: self.localTree,
-            workTree: self.workTree,
+            workTree: self.localWorkTree,
             rqdb: self.db,
             noprocessor: true
         });
+    self.workTree = self.testTree.work;
     spyOn(self.remoteTree, 'exists').andCallThrough();
+    spyOn(self.remoteTree, 'open').andCallThrough();
+    spyOn(self.remoteTree, 'delete').andCallThrough();
     spyOn(self.localTree, 'exists').andCallThrough();
     spyOn(self.workTree, 'exists').andCallThrough();
     spyOn(self.testShare, 'emit').andCallThrough();
@@ -96,14 +99,26 @@ RQCommon.prototype.addFiles = function (tree, numFiles, cb) {
 RQCommon.prototype.addLocalFile = function (fileName, cb) {
     var self = this;
     self.addFile(self.localTree, fileName, function () {
-        self.addFile(self.workTree, fileName, cb);
+        self.workTree.createFileExisting(fileName, cb);
     });
 };
 
 RQCommon.prototype.addLocalFiles = function (numFiles, cb) {
     var self = this;
+
+    function addWorkFile (index) {
+        if (index < numFiles) {
+            self.workTree.createFileExisting('/testfile' + (index + 1), function (err) {
+                expect(err).toBeFalsy();
+                addWorkFile(index + 1);
+            });
+        } else {
+            cb();
+        }
+    }
+
     self.addFiles(self.localTree, numFiles, function () {
-        self.addFiles(self.workTree, numFiles, cb);
+        addWorkFile(0);
     });
 };
 
@@ -111,7 +126,7 @@ RQCommon.prototype.addLocalFileWithDates = function (path, readOnly, content, cr
     var self = this;
     self.localTree.addFileWithDates(path, readOnly, content, created, lastModified, function (err) {
         expect(err).toBeFalsy();
-        self.addFile(self.workTree, path, cb);
+        self.workTree.createFileExisting(path, cb);
     });
 };
 
