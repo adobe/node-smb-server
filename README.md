@@ -32,3 +32,4 @@ Check/Implement the following protocol extensions/versions:
 * SMB2/3
 
 [SMB]: http://en.wikipedia.org/wiki/Server_Message_Block
+
