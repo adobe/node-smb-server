@@ -1,7 +1,17 @@
 {
   "name": "node-smb-server",
-  "description": "pure javascript SMB server implementation",
+  "description": "A Pure JavaScript SMB Server Implementation",
   "version": "0.10.10",
+  "keywords": [
+    "SMB",
+    "CIFS",
+    "Samba",
+    "NTLM",
+    "NetBIOS",
+    "File-Sharing",
+    "Share",
+    "Server"
+  ],
   "main": "index.js",
   "scripts": {
     "start": "node ./index.js"
