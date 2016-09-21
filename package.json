@@ -1,7 +1,7 @@
 {
   "name": "node-smb-server",
   "description": "A Pure JavaScript SMB Server Implementation",
-  "version": "0.10.10",
+  "version": "0.10.11",
   "keywords": [
     "SMB",
     "CIFS",
@@ -43,4 +43,3 @@
     "url": "https://github.com/adobe/node-smb-server/issues"
   }
 }
-
