@@ -65,7 +65,7 @@ node createhash.js
 
 ### Share configuration
 
-Share configuraitons can be edited in the `config.json` file, e.g.:
+Share configurations can be edited in the `config.json` file, e.g.:
 ```
 ...
  "shares": {
