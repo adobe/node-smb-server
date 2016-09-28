@@ -267,10 +267,12 @@ describe('RQTree', function () {
     describe('List', function () {
         var expectHasFile = function (files, path) {
             var hasFile = false;
-            for (var i = 0; i < files.length; i++) {
-                if (files[i].getPath() == path) {
-                    hasFile = true;
-                    break;
+            if (files) {
+                for (var i = 0; i < files.length; i++) {
+                    if (files[i].getPath() == path) {
+                        hasFile = true;
+                        break;
+                    }
                 }
             }
             expect(hasFile).toBeTruthy();
