@@ -3,7 +3,7 @@
   "description": "unit tests for javascript SMB server implementation",
   "version": "0.9.7",
   "scripts": {
-    "test": "./node_modules/.bin/jasmine-node ."
+    "test": "./node_modules/.bin/jasmine-node --captureExceptions ."
   },
   "dependencies": {
     "jasmine-node": "^1.14.5"
