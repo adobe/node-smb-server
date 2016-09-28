@@ -13,15 +13,23 @@
 var common = require('../../test-common');
 var RQTree = require('../../../../lib/backends/rq/tree');
 var RQShare = require('../../../../lib/backends/rq/share');
-var RQFile = require('../../../../lib/backends/rq/file');
 var TestTree = require('../test/tree');
 var TestShare = require('../test/share');
 var util = require('util');
 var utils = require('../../../../lib/utils');
 
-function RQCommon() {
+function RQCommon(config) {
     var self = this;
     common.call(this);
+
+    config = config || {};
+
+    if (config.shareType) {
+        RQShare = config.shareType;
+    }
+    if (config.treeType) {
+        RQTree = config.treeType;
+    }
 
     self.remoteTree = new TestTree();
     self.localTree = new TestTree();

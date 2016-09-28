@@ -146,7 +146,7 @@ TestTree.prototype.open = function (name, cb) {
         if (err) {
             cb(err);
         } else if (!doc) {
-            cb('cannot open file at ' + path + '. not found');
+            cb('cannot open file at ' + name + '. not found');
         } else {
             cb(null, new TestFile(name, self, doc));
         }
