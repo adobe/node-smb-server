@@ -10,11 +10,13 @@
  *  governing permissions and limitations under the License.
  */
 
+var util = require('util');
+var Datastore = require('nedb');
+var Path = require('path');
+
 var Tree = require('../../../../lib/spi/tree');
 var TestFile = require('./file');
-var Datastore = require('nedb');
 var utils = require('../../../../lib/utils');
-var Path = require('path');
 
 var TestTree = function () {
     if (!(this instanceof TestTree)) {
@@ -25,6 +27,8 @@ var TestTree = function () {
 
     Tree.call(this);
 };
+
+util.inherits(TestTree, Tree);
 
 TestTree.prototype.printEntities = function () {
     this.entities.find({}, function (err, docs) {
