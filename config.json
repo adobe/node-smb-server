@@ -89,6 +89,7 @@
         "syncfilestart",
         "syncfileend",
         "syncfileerr",
+        "syncfileabort",
         "syncerr",
         "syncpurged",
         "syncconflict"
