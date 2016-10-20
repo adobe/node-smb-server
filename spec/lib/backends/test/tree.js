@@ -10,11 +10,13 @@
  *  governing permissions and limitations under the License.
  */
 
+var util = require('util');
+var Datastore = require('nedb');
+var Path = require('path');
+
 var Tree = require('../../../../lib/spi/tree');
 var TestFile = require('./file');
-var Datastore = require('nedb');
 var utils = require('../../../../lib/utils');
-var Path = require('path');
 
 var TestTree = function () {
     if (!(this instanceof TestTree)) {
@@ -25,6 +27,8 @@ var TestTree = function () {
 
     Tree.call(this);
 };
+
+util.inherits(TestTree, Tree);
 
 TestTree.prototype.printEntities = function () {
     this.entities.find({}, function (err, docs) {
@@ -45,6 +49,10 @@ TestTree.prototype.createFileInstance = function (filePath, content, fileLength,
 };
 
 TestTree.prototype.isTempFileName = function (name) {
+    return false;
+};
+
+TestTree.prototype.isTempFileNameForce = function (name) {
     name = utils.getPathName(name);
     if (name) {
         if (name.length > 0) {
@@ -142,7 +150,7 @@ TestTree.prototype.open = function (name, cb) {
         if (err) {
             cb(err);
         } else if (!doc) {
-            cb('cannot open file at ' + path + '. not found');
+            cb('cannot open file at ' + name + '. not found');
         } else {
             cb(null, new TestFile(name, self, doc));
         }

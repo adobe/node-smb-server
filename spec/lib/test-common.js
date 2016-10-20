@@ -12,6 +12,15 @@
 
 var Datastore = require('nedb');
 var events = require('events').EventEmitter;
+var Path = require('path');
+
+// force paths to use forward slashes for compatibility
+Path.sep = '/';
+Path.join2 = Path.join;
+Path.join = function () {
+    var res = Path.join2.apply({}, arguments);
+    return res.replace(/\\/g, Path.sep);
+};
 
 function TestCommon() {
     var self = this;

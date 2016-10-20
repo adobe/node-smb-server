@@ -263,7 +263,8 @@ describe('RQProcessor', function () {
             c.fs.setTestFile('/local/path' + localFileName, 'content');
             c.addFile(c.remoteTree, remoteFileName, function () {
                 c.addFile(c.localTree, localFileName, function () {
-                    c.addFile(c.workTree, localFileName, function () {
+                    c.workTree.createFileExisting(localFileName, function (err, file) {
+                        expect(err).toBeFalsy();
                         c.testTree.open(localFileName, function (err, rqFile) {
                             expect(err).toBeFalsy();
                             rqFile.setLength(10, function (err) {
