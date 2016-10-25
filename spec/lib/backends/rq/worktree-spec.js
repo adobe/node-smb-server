@@ -21,6 +21,18 @@ describe('WorkTree', function () {
         spyOn(c.remoteTree, 'list').andCallThrough();
     });
 
+    describe('Open', function () {
+        it('testOpenMissing', function (done) {
+            c.workTree.open('/file', function (err, file) {
+                expect(err).toBeFalsy();
+                c.expectLocalFileExistExt('/file', false, true, false, function () {
+                    expect(c.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
+                    done();
+                });
+            });
+        });
+    });
+
     describe('CreateFile', function () {
         it('testCreateFile', function (done) {
             c.workTree.createFile('/file', function (err, file) {
@@ -49,6 +61,16 @@ describe('WorkTree', function () {
                 c.expectLocalFileExist('/.temp', false, false, done);
             });
         });
+
+        it('testCreateFileAlreadyExists', function (done) {
+            c.workTree.createFile('/testfile', function (err, file) {
+                expect(err).toBeFalsy();
+                c.workTree.createFile('/testfile', function (err, file) {
+                    expect(err).toBeFalsy();
+                    c.expectLocalFileExistExt('/testfile', false, true, true, done);
+                });
+            });
+        });
     });
 
     describe('Rename', function () {
@@ -71,6 +93,18 @@ describe('WorkTree', function () {
                     expect(err).toBeFalsy();
                     c.expectLocalFileExistExt('/file2', false, true, true, function () {
                         c.expectLocalFileExist('/file', false, false, done);
+                    });
+                });
+            });
+        });
+
+        it('testRenameMissing', function (done) {
+            c.workTree.rename('/file', '/file2', function (err) {
+                expect(err).toBeFalsy();
+                c.expectLocalFileExistExt('/file2', false, true, false, function () {
+                    c.expectLocalFileExist('/file', false, false, function () {
+                        expect(c.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
+                        done();
                     });
                 });
             });
@@ -131,6 +165,13 @@ describe('WorkTree', function () {
             c.workTree.delete('/.temp', function (err) {
                 expect(err).toBeFalsy();
                 c.expectLocalFileExist('/.temp', false, false, done);
+            });
+        });
+
+        it('testDeleteMissing', function (done) {
+            c.workTree.delete('/file', function (err) {
+                expect(err).toBeFalsy();
+                c.expectLocalFileExist('/file', false, false, done);
             });
         });
     });
