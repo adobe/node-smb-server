@@ -992,6 +992,26 @@ describe('RQTree', function () {
                 });
             });
         });
+
+        it('testRenameOverwrite', function (done) {
+            c.testTree.createFile('/destfile', function (err, file) {
+                expect(err).toBeFalsy();
+                c.addFile(c.remoteTree, '/somefile', function () {
+                    c.testTree.open('/somefile', function (err, file) {
+                        expect(err).toBeFalsy();
+                        file.cacheFile(function (err) {
+                            expect(err).toBeFalsy();
+                            c.testTree.rename('/somefile', '/destfile', function (err) {
+                                expect(err).toBeFalsy();
+                                c.expectLocalFileExist('/destfile', true, true, function () {
+                                    c.expectLocalFileExist('/somefile', false, false, done);
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 
     describe('TempFiles', function () {

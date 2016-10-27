@@ -236,31 +236,42 @@ TestTree.prototype.deleteDirectory = function (name, cb) {
 
 TestTree.prototype.rename = function (oldName, newName, cb) {
     var self = this;
+
+    var doUpdate = function () {
+        self.entities.update({$and: [{path: utils.getParentPath(oldName)},
+              {name: utils.getPathName(oldName)}]}, {$set: {path: utils.getParentPath(newName), name: utils.getPathName(newName)}},
+          {multi: true},
+          function (err, numUpdated) {
+              if (err) {
+                  cb(err);
+              } else if (numUpdated != 1) {
+                  cb('unexpected number of entities renamed: '  + numUpdated);
+              } else {
+                  self.entities.update({path: oldName}, {$set: {path: newName}}, {multi:true}, function (err, numUpdated) {
+                      if (err) {
+                          cb(err);
+                      } else {
+                          cb();
+                      }
+                  });
+              }
+          }
+        );
+    };
+
     self.exists(newName, function (err, exists) {
         if (err) {
             cb(err);
         } else if (exists) {
-            cb('destination of rename already exists: ' + newName);
-        } else {
-            self.entities.update({$and: [{path: utils.getParentPath(oldName)},
-                    {name: utils.getPathName(oldName)}]}, {$set: {path: utils.getParentPath(newName), name: utils.getPathName(newName)}},
-                {multi: true},
-                function (err, numUpdated) {
-                    if (err) {
-                        cb(err);
-                    } else if (numUpdated != 1) {
-                        cb('unexpected number of entities renamed: '  + numUpdated);
-                    } else {
-                        self.entities.update({path: oldName}, {$set: {path: newName}}, {multi:true}, function (err, numUpdated) {
-                            if (err) {
-                                cb(err);
-                            } else {
-                                cb();
-                            }
-                        });
-                    }
+            self.delete(newName, function (err) {
+                if (err) {
+                    cb(err);
+                } else {
+                    doUpdate();
                 }
-            );
+            });
+        } else {
+            doUpdate();
         }
     });
 };
