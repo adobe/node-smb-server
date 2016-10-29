@@ -791,7 +791,7 @@ describe('RQTree', function () {
         c.addFile(c.localWorkTree, '/testfile', function () {
             c.testTree.createFile('/testfile', function (err, file) {
                 expect(err).toBeFalsy();
-                c.expectLocalFileExist('/testfile', true, false, done);
+                c.expectLocalFileExist('/testfile', true, true, done);
             });
         });
     });
@@ -988,7 +988,7 @@ describe('RQTree', function () {
             c.addFile(c.localTree, '/testfile', function () {
                 c.testTree.rename('/testfile', '/testfile2', function (err) {
                     expect(err).toBeFalsy();
-                    c.expectLocalFileExistExt('/testfile2', true, true, false, done);
+                    c.expectLocalFileExistExt('/testfile2', true, true, true, done);
                 });
             });
         });

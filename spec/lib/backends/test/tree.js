@@ -94,7 +94,11 @@ TestTree.prototype.addEntity = function (path, options, cb) {
         if (err) {
             cb(err);
         } else if (exists) {
-            cb('entity at path ' + path + ' already exists');
+            if (options.isFile) {
+                cb('entity at path ' + path + ' already exists');
+            } else {
+                cb();
+            }
         } else {
             createParent(utils.getParentPath(path));
         }

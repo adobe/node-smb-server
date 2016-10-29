@@ -203,4 +203,34 @@ RQCommon.prototype.addQueuedFile = function (path, cb) {
     });
 };
 
+RQCommon.prototype.addCachedFile = function (path, cb) {
+    var c = this;
+    c.addFile(c.remoteTree, path, function () {
+        c.testTree.open(path, function (err, file) {
+            expect(err).toBeFalsy();
+            file.cacheFile(function (err) {
+                expect(err).toBeFalsy();
+                file.close(function (err) {
+                    expect(err).toBeFalsy();
+                    cb();
+                });
+            });
+        });
+    });
+};
+
+RQCommon.prototype.addDeletedFile = function (path, cb) {
+    var c = this;
+    c.addCachedFile(path, function () {
+        c.testTree.open(path, function (err, file) {
+            c.testTree.delete(path, function (err) {
+                expect(err).toBeFalsy();
+                c.expectQueuedMethod(utils.getParentPath(path), utils.getPathName(path), 'DELETE', function () {
+                    c.expectLocalFileExist(path, false, false, cb);
+                });
+            });
+        });
+    });
+};
+
 module.exports = RQCommon;
