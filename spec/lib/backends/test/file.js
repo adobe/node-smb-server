@@ -38,6 +38,11 @@ TestFile.prototype.isReadOnly = function () {
     return this.data.readOnly;
 };
 
+TestFile.prototype.setReadOnly = function (readOnly) {
+    this.dirty = true;
+    this.data.readOnly = readOnly;
+};
+
 TestFile.prototype.size = function () {
     return this.data.content.length;
 };
