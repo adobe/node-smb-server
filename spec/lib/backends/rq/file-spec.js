@@ -168,23 +168,25 @@ describe('RQFile', function () {
             c.addCachedFile('/testfile', function () {
                 c.remoteTree.open('/testfile', function (err, file) {
                     expect(err).toBeFalsy();
-                    file.setReadOnly(true);
-                    file.close(function (err) {
+                    file.setReadOnly(true, function (err) {
                         expect(err).toBeFalsy();
-                        c.localTree.open('/testfile', function (err, file) {
+                        file.close(function (err) {
                             expect(err).toBeFalsy();
-                            expect(file.isReadOnly()).toBeFalsy();
-                            c.testTree.open('/testfile', function (err, file) {
+                            c.localTree.open('/testfile', function (err, file) {
                                 expect(err).toBeFalsy();
                                 expect(file.isReadOnly()).toBeFalsy();
-                                file.cacheFile(function (err) {
+                                c.testTree.open('/testfile', function (err, file) {
                                     expect(err).toBeFalsy();
-                                    file.close(function (err) {
+                                    expect(file.isReadOnly()).toBeFalsy();
+                                    file.cacheFile(function (err) {
                                         expect(err).toBeFalsy();
-                                        c.localTree.open('/testfile', function (err, file) {
+                                        file.close(function (err) {
                                             expect(err).toBeFalsy();
-                                            expect(file.isReadOnly()).toBeTruthy();
-                                            done();
+                                            c.localTree.open('/testfile', function (err, file) {
+                                                expect(err).toBeFalsy();
+                                                expect(file.isReadOnly()).toBeTruthy();
+                                                done();
+                                            });
                                         });
                                     });
                                 });
@@ -199,28 +201,31 @@ describe('RQFile', function () {
             c.addCachedFile('/testfile', function () {
                 c.localTree.open('/testfile', function (err, file) {
                     expect(err).toBeFalsy();
-                    file.setReadOnly(true);
-                    file.close(function (err) {
+                    file.setReadOnly(true, function (err) {
                         expect(err).toBeFalsy();
-                        c.remoteTree.open('/testfile', function (err, file) {
+                        file.close(function (err) {
                             expect(err).toBeFalsy();
-                            expect(file.isReadOnly()).toBeFalsy();
-                            c.testTree.open('/testfile', function (err, file) {
+                            c.remoteTree.open('/testfile', function (err, file) {
                                 expect(err).toBeFalsy();
-                                expect(file.isReadOnly()).toBeTruthy();
-                                file.cacheFile(function (err) {
+                                expect(file.isReadOnly()).toBeFalsy();
+                                c.testTree.open('/testfile', function (err, file) {
                                     expect(err).toBeFalsy();
-                                    file.close(function (err) {
+                                    expect(file.isReadOnly()).toBeTruthy();
+                                    file.cacheFile(function (err) {
                                         expect(err).toBeFalsy();
-                                        c.localTree.open('/testfile', function (err, file) {
+                                        file.close(function (err) {
                                             expect(err).toBeFalsy();
-                                            expect(file.isReadOnly()).toBeFalsy();
-                                            done();
+                                            c.localTree.open('/testfile', function (err, file) {
+                                                expect(err).toBeFalsy();
+                                                expect(file.isReadOnly()).toBeFalsy();
+                                                done();
+                                            });
                                         });
                                     });
                                 });
                             });
                         });
+
                     });
                 });
             });
