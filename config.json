@@ -90,9 +90,11 @@
         "syncfileend",
         "syncfileerr",
         "syncfileabort",
+        "syncfileprogress",
         "syncerr",
         "syncpurged",
-        "syncconflict"
+        "syncconflict",
+        "requestqueueinit"
       ]
     }
   }
