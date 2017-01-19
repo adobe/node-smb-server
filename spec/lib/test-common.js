@@ -74,6 +74,7 @@ function TestCommon() {
       stream['pipe'] = function (other) {
         var pipeStream = new events();
         var emitEnd = function () {
+          stream.emit('data', [1, 2, 3, 4, 5]);
           if (!other.aborted) {
             if (other.emit) {
               other.emit('end');
