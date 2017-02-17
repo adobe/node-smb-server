@@ -138,6 +138,25 @@ describe('RequestQueue', function () {
     expect(verified).toEqual(expected);
   };
 
+  var expectQueueChangedEmitted = function (notCalled) {
+    var verified = false;
+    var expected = true;
+    if (notCalled) {
+      expected = false;
+    }
+    if (rq.emit.calls) {
+      for (var i = 0; i < rq.emit.calls.length; i++) {
+        if (rq.emit.calls[i].args) {
+          if (rq.emit.calls[i].args[0] == 'queuechanged') {
+            verified = true;
+            break;
+          }
+        }
+      }
+    }
+    expect(verified).toEqual(expected);
+  };
+
   beforeEach(function () {
     common = new testcommon();
 
@@ -226,6 +245,7 @@ describe('RequestQueue', function () {
       rq.removeRequest(testPath, testName, function (err) {
         expect(err).toBeFalsy();
         expectEventEmitted('itemupdated', Path.join(testPath, testName));
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -234,6 +254,7 @@ describe('RequestQueue', function () {
       rq.removeRequest(testPath, testName, function (err) {
         expect(err).toBeTruthy();
         expectEventEmitted('itemupdated', Path.join(testPath, testName), true);
+        expectQueueChangedEmitted(true);
         done();
       });
     });
@@ -280,6 +301,7 @@ describe('RequestQueue', function () {
           expect(lookup[testName]).toEqual('PUT');
           expect(lookup[testDestName]).toEqual('DELETE');
           expectEventEmitted('pathupdated', testPath);
+          expectQueueChangedEmitted();
           done();
         });
       });
@@ -293,6 +315,7 @@ describe('RequestQueue', function () {
           expect(err).toBeFalsy();
           expect(lookup[testName]).toEqual('DELETE');
           expectEventEmitted('pathupdated', testPath);
+          expectQueueChangedEmitted();
           done();
         });
       });
@@ -310,6 +333,7 @@ describe('RequestQueue', function () {
           expect(lookup[testName]).toBeFalsy();
           expect(lookup[testDestName]).toBeFalsy();
           expectEventEmitted('pathupdated', testPath);
+          expectQueueChangedEmitted();
           done();
         });
       });
@@ -323,6 +347,7 @@ describe('RequestQueue', function () {
           expect(err).toBeFalsy();
           expect(lookup[testName]).toBeFalsy();
           expectEventEmitted('pathupdated', testPath);
+          expectQueueChangedEmitted();
           done();
         });
       });
@@ -336,6 +361,7 @@ describe('RequestQueue', function () {
           expect(err).toBeFalsy();
           expect(lookup[testName]).toBeFalsy();
           expectEventEmitted('pathupdated', '/');
+          expectQueueChangedEmitted();
           done();
         });
       });
@@ -356,6 +382,7 @@ describe('RequestQueue', function () {
             expect(lookup[testName]).toEqual('PUT');
             expect(lookup[testDestName]).toEqual('DELETE');
             expectEventEmitted('pathupdated', testPath, true);
+            expectQueueChangedEmitted();
             done();
           });
         });
@@ -373,6 +400,7 @@ describe('RequestQueue', function () {
             expect(err).toBeFalsy();
             expect(lookup[testName]).toEqual('PUT');
             expectEventEmitted('pathupdated', testPath, true);
+            expectQueueChangedEmitted();
             done();
           });
         });
@@ -391,6 +419,7 @@ describe('RequestQueue', function () {
         expect(results[0].localPrefix).toEqual(testLocalPrefix);
         expect(results[0].remotePrefix).toEqual(testRemotePrefix);
         expectEventEmitted('itemupdated', testFullPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -400,6 +429,7 @@ describe('RequestQueue', function () {
       queueAndVerify('DELETE', function (results) {
         expect(results.length).toEqual(0);
         expectEventEmitted('itemupdated', testFullPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -407,6 +437,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestDeletePost', function (done) {
       queueAndVerifyReplace('POST', 'DELETE', function (results) {
         expectEventEmitted('itemupdated', testFullPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -423,6 +454,7 @@ describe('RequestQueue', function () {
         expect(valid).toEqual(true);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -444,6 +476,7 @@ describe('RequestQueue', function () {
         expect(results[del].name).toEqual(testName);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -451,6 +484,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestDeleteDelete', function (done) {
       queueAndVerifyReplace('DELETE', 'DELETE', function (results) {
         expectEventEmitted('itemupdated', testFullPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -458,6 +492,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestPut', function (done) {
       queueAndVerify('PUT', function (results) {
         expectEventEmitted('itemupdated', testFullPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -465,6 +500,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestPutPut', function (done) {
       queueAndVerifyReplace('PUT', 'PUT', function (results) {
         expectEventEmitted('itemupdated', testFullPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -472,6 +508,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestPutPost', function (done) {
       queueAndVerifyNoReplace('POST', 'PUT', function (results) {
         expectEventEmitted('itemupdated', testFullPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -490,6 +527,7 @@ describe('RequestQueue', function () {
         }
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         expect(verified).toEqual(true);
         done();
       });
@@ -510,6 +548,7 @@ describe('RequestQueue', function () {
         expect(verified).toEqual(true);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -517,6 +556,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestPutDelete', function (done) {
       queueAndVerifyReplace('DELETE', 'POST', function (results) {
         expectEventEmitted('itemupdated', testFullPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -524,6 +564,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestPost', function (done) {
       queueAndVerify('POST', function (results) {
         expectEventEmitted('itemupdated', testFullPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -531,6 +572,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestPostPut', function (done) {
       queueAndVerifyNoReplace('PUT', 'POST', function (results) {
         expectEventEmitted('itemupdated', testFullPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -538,6 +580,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestPostPost', function (done) {
       queueAndVerifyReplace('POST', 'POST', function (results) {
         expectEventEmitted('itemupdated', testFullPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -546,6 +589,7 @@ describe('RequestQueue', function () {
       queueAndVerifyMethod('MOVE', 'POST', 'POST', function (results) {
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -554,6 +598,7 @@ describe('RequestQueue', function () {
       queueAndVerifyMethod('COPY', 'POST', 'POST', function (results) {
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -561,6 +606,7 @@ describe('RequestQueue', function () {
     it('testQueueRequestPostDelete', function (done) {
       queueAndVerifyReplace('DELETE', 'POST', function (results) {
         expectEventEmitted('itemupdated', testFullPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -587,6 +633,7 @@ describe('RequestQueue', function () {
 
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -604,6 +651,7 @@ describe('RequestQueue', function () {
         expect(verified).toEqual(true);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -613,6 +661,7 @@ describe('RequestQueue', function () {
         expect(docs.length).toEqual(2);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -622,6 +671,7 @@ describe('RequestQueue', function () {
         expect(docs.length).toEqual(2);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -631,6 +681,7 @@ describe('RequestQueue', function () {
         expect(docs.length).toEqual(2);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -640,6 +691,7 @@ describe('RequestQueue', function () {
         expect(docs.length).toEqual(2);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -653,6 +705,7 @@ describe('RequestQueue', function () {
         expect(docs[0].timestamp).not.toBeUndefined();
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -673,6 +726,7 @@ describe('RequestQueue', function () {
         expect(local).toEqual(true);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -703,6 +757,7 @@ describe('RequestQueue', function () {
             expect(remoteUrl2).toEqual(testRemote);
             expectEventEmitted('itemupdated', testFullPath, true);
             expectEventEmitted('itemupdated', testFullDestPath, true);
+            expectQueueChangedEmitted();
             done();
           });
         });
@@ -716,6 +771,7 @@ describe('RequestQueue', function () {
         expect(docs.length).toEqual(2);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath);
+        expectQueueChangedEmitted();
         done();
       });
     });
@@ -730,6 +786,7 @@ describe('RequestQueue', function () {
             expect(remoteUrl).toEqual(testDestRemote);
             expectEventEmitted('itemupdated', testFullPath, true);
             expectEventEmitted('itemupdated', testFullDestPath);
+            expectQueueChangedEmitted();
             done();
           });
         });
@@ -743,6 +800,7 @@ describe('RequestQueue', function () {
         expect(docs.length).toEqual(2);
         expectEventEmitted('itemupdated', testFullPath, true);
         expectEventEmitted('itemupdated', testFullDestPath, true);
+        expectQueueChangedEmitted();
         done();
       });
     });
