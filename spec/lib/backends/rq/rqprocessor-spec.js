@@ -286,6 +286,18 @@ describe('RQProcessor', function () {
         });
       });
     });
+
+    it('testSyncNoExist', function (done) {
+      c.addQueuedFile('/testfile', function () {
+        processor.sync(config, function (err) {
+          expect(err).toBeFalsy();
+          c.expectQueuedMethod('/', 'testfile', 'PUT', function () {
+            expect(processor.emit).toHaveBeenCalledWith('syncerr', { path: '/testfile', file: '/local/path/testfile', method: 'POST', err: jasmine.any(String) });
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe('StartStop', function () {
