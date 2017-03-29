@@ -812,6 +812,16 @@ describe('RQTree', function () {
     });
   });
 
+  it('testCreateDirectoryTemp', function (done) {
+    c.testTree.createDirectory('/.test', function (err, dir) {
+      expect(err).toBeFalsy();
+      expect(dir.isDirectory()).toBeTruthy();
+      c.expectPathExist(c.localTree, '/.test', true, function () {
+        c.expectPathExist(c.remoteTree, '/.test', false, done);
+      });
+    });
+  });
+
   describe('Delete', function () {
     it('testDeleteLocalOnly', function (done) {
       c.testTree.createFile('/testfile', function (err, file) {
@@ -909,6 +919,18 @@ describe('RQTree', function () {
         });
       });
     });
+
+    it('testDeleteDirectoryTempName', function (done) {
+      c.addDirectory(c.localTree, '/.test', function () {
+        c.testTree.deleteDirectory('/.test', function (err) {
+          expect(err).toBeFalsy();
+          c.expectPathExist(c.localTree, '/.test', false, function () {
+            expect(c.remoteTree.deleteDirectory).not.toHaveBeenCalled();
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe('Rename', function () {
@@ -962,6 +984,52 @@ describe('RQTree', function () {
                     c.expectPathExist(c.localTree, '/test2', true, function () {
                       c.expectPathExist(c.workTree, '/test', false, function () {
                         c.expectPathExist(c.workTree, '/test2', true, done);
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testRenameFolderToTemp', function (done) {
+      c.addDirectory(c.remoteTree, '/test', function () {
+        c.addDirectory(c.localTree, '/test', function () {
+          c.workTree.createDirectory('/test', function (err) {
+            expect(err).toBeFalsy();
+            c.testTree.rename('/test', '/.test', function (err) {
+              c.expectPathExist(c.remoteTree, '/test', true, function () {
+                c.expectPathExist(c.remoteTree, '/.test', false, function () {
+                  c.expectPathExist(c.localTree, '/test', false, function () {
+                    c.expectPathExist(c.localTree, '/.test', true, function () {
+                      c.expectPathExist(c.workTree, '/test', false, function () {
+                        c.expectPathExist(c.workTree, '/.test', true, done);
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testRenameFolderFromTemp', function (done) {
+      c.addDirectory(c.remoteTree, '/.test', function () {
+        c.addDirectory(c.localTree, '/.test', function () {
+          c.workTree.createDirectory('/.test', function (err) {
+            expect(err).toBeFalsy();
+            c.testTree.rename('/.test', '/test', function (err) {
+              c.expectPathExist(c.remoteTree, '/.test', true, function () {
+                c.expectPathExist(c.remoteTree, '/test', false, function () {
+                  c.expectPathExist(c.localTree, '/.test', false, function () {
+                    c.expectPathExist(c.localTree, '/test', true, function () {
+                      c.expectPathExist(c.workTree, '/.test', false, function () {
+                        c.expectPathExist(c.workTree, '/test', true, done);
                       });
                     });
                   });
