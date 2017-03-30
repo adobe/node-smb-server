@@ -116,6 +116,14 @@ function TestCommon() {
         throw 'invalid file: ' + filePath;
       }
     },
+    stat: function (filePath, cb) {
+      try {
+        var stats = this.statSync(filePath);
+        cb(null, stats);
+      } catch (e) {
+        cb(e);
+      }
+    },
     closeSync: function (args) {
     },
     openSync: function (args) {

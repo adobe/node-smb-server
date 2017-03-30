@@ -69,6 +69,7 @@ function RQCommon(config) {
   spyOn(self.remoteTree, 'exists').andCallThrough();
   spyOn(self.remoteTree, 'open').andCallThrough();
   spyOn(self.remoteTree, 'delete').andCallThrough();
+  spyOn(self.remoteTree, 'deleteDirectory').andCallThrough();
   spyOn(self.localTree, 'exists').andCallThrough();
   spyOn(self.workTree, 'exists').andCallThrough();
   spyOn(self.testShare, 'emit').andCallThrough();
