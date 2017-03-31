@@ -585,20 +585,26 @@ describe('RQTree', function () {
     it('testDeleteLocalDirectoryRecursive', function (done) {
       c.addDirectory(c.localTree, '/removeme', function () {
         c.addLocalFile('/removeme/file1', function () {
-          c.addDirectory(c.localTree, '/removeme/subfolder', function () {
-            c.addLocalFile('/removeme/subfolder/file2', function () {
-              c.testTree.deleteLocalDirectoryRecursive('/removeme', function (err) {
-                expect(err).toBeFalsy();
-                c.expectPathExist(c.localTree, '/removeme', false, function () {
-                  c.expectPathExist(c.localTree, '/removeme/subfolder', false, function () {
-                    c.expectLocalFileExist('/removeme/file1', false, false, function () {
-                      c.expectLocalFileExist('/removeme/subfolder/file2', false, false, done);
+          c.testTree.createFile('/request-queue.nedb', function () {
+            c.addDirectory(c.localTree, '/removeme/subfolder', function () {
+              c.addLocalFile('/removeme/subfolder/file2', function () {
+                c.testTree.deleteLocalDirectoryRecursive('/', function (err) {
+                  expect(err).toBeFalsy();
+                  c.expectPathExist(c.localTree, '/removeme', false, function () {
+                    c.expectPathExist(c.localTree, '/removeme/subfolder', false, function () {
+                      c.expectLocalFileExist('/removeme/file1', false, false, function () {
+                        c.expectLocalFileExist('/removeme/subfolder/file2', false, false, function () {
+                          c.expectLocalFileExistExt('/request-queue.nedb', true, true, true, function () {
+                            c.expectPathExist(c.localTree, '/', true, done);
+                          });
+                        });
+                      });
                     });
                   });
                 });
               });
             });
-          })
+          });
         });
       });
     });
@@ -634,13 +640,6 @@ describe('RQTree', function () {
       });
     });
 
-    it('testDeleteLocalDirectoryRoot', function (done) {
-      c.testTree.deleteLocalDirectoryRecursive('/', function (err) {
-        expect(err).toBeTruthy();
-        done();
-      });
-    });
-
     it('testDeleteLocalDirectoryRecursiveWork', function (done) {
       c.addDirectory(c.remoteTree, '/removeme', function () {
         c.addDirectory(c.remoteTree, '/removeme/sub', function () {
@@ -660,7 +659,7 @@ describe('RQTree', function () {
                           c.testTree.deleteLocalDirectoryRecursive('/removeme', function (err) {
                             expect(err).toBeFalsy();
                             c.expectLocalFileExist('/remoteme/file3', false, false, function () {
-                              expect(c.testShare.emit).toHaveBeenCalledWith('syncconflict', {file: '/removeme/file3'});
+                              expect(c.testShare.emit).toHaveBeenCalledWith('syncconflict', {path: '/removeme/file3'});
                               expect(c.testShare.emit.calls.length).toEqual(2);
                               done();
                             });
