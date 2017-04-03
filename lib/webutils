@@ -27,13 +27,21 @@ var reqlog = require('winston').loggers.get('request');
 function submitRequest(options, cb) {
   var ts = new Date().getTime();
   var method = options.method || 'GET';
-  reqlog.info('[%d] %s > %s', ts, method, options.url);
+  var url = options.url;
+
+  if (options.headers) {
+    if (options.headers['X-Destination']) {
+      url += ' > ' + options.headers['X-Destination'];
+    }
+  }
+
+  reqlog.info('[%d] -> %s %s', ts, method, url);
   return request(options, cb)
     .on('response', function (res) {
-      reqlog.info('[%d] %d %s < %s', ts, res.statusCode, method, options.url);
+      reqlog.info('[%d] <- %d %s %s', ts, res.statusCode, method, url);
     })
     .on('error', function (err) {
-      reqlog.error('[%d] ERR %s < %s', ts, method, options.url, err);
+      reqlog.error('[%d] <- ERR %s %s', ts, method, url, err);
     });
 }
 
