@@ -16,41 +16,43 @@ var RequestQueue = require('../../../../lib/backends/rq/requestqueue');
 var Path = require('path');
 
 describe('RQProcessor', function () {
-  var processor, c, rq, req, config, nextStatusCode, requestedUrls;
+  var processor, c, rq, webutils, config, nextStatusCode, requestedUrls;
 
   beforeEach(function () {
     requestedUrls = [];
     c = new RQCommon();
-    req = function (options, cb) {
-      requestedUrls.push(options.url);
-      var statusCode = 200;
-      if (nextStatusCode) {
-        statusCode = nextStatusCode;
-        nextStatusCode = false;
-      }
-      if (options.method != 'POST' && options.method != 'PUT') {
-        cb(null, {
-          statusCode: statusCode
-        }, '');
-      } else {
-        return {
-          emit: function (toEmit) {
-            if (toEmit == 'end') {
-              cb(null, {
-                statusCode: statusCode
-              }, '');
+    webutils = {
+      submitRequest: function (options, cb) {
+        requestedUrls.push(options.url);
+        var statusCode = 200;
+        if (nextStatusCode) {
+          statusCode = nextStatusCode;
+          nextStatusCode = false;
+        }
+        if (options.method != 'POST' && options.method != 'PUT') {
+          cb(null, {
+            statusCode: statusCode
+          }, '');
+        } else {
+          return {
+            emit: function (toEmit) {
+              if (toEmit == 'end') {
+                cb(null, {
+                  statusCode: statusCode
+                }, '');
+              }
+            },
+            abort: function () {
+              this.aborted = true;
             }
-          },
-          abort: function () {
-            this.aborted = true;
-          }
-        };
+          };
+        }
       }
     };
 
     processor = new RQProcessor(c.testTree, {
       fs: c.fs,
-      request: req
+      webutils: webutils
     });
 
     config = {
