@@ -94,7 +94,7 @@
         "syncerr",
         "syncpurged",
         "syncconflict",
-        "folderlisted",
+        "folderlist",
         "requestqueueinit"
       ]
     }
