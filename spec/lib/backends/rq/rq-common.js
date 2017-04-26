@@ -49,10 +49,11 @@ function RQCommon(config) {
     tree: self.remoteTree,
     contentCacheTTL: 200
   };
+  self.remoteShare = new TestShare('test', self.config);
   self.testShare = new RQShare(
     'rq',
     self.config,
-    new TestShare('test', self.config),
+    self.remoteShare,
     self.remoteTree,
     self.localTree,
     self.localWorkTree);

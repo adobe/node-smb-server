@@ -330,4 +330,80 @@ describe('WorkTree', function () {
       });
     });
   });
+
+  describe('Downloading', function () {
+    it('testIsDownloading', function (done) {
+      c.workTree.isDownloading('/testfile', function (err, isDownloading) {
+        expect(err).toBeFalsy();
+        expect(isDownloading).toBeFalsy();
+        c.workTree.setDownloading('/testfile', true, function (err) {
+          expect(err).toBeFalsy();
+          c.workTree.isDownloading('/testfile', function (err, isDownloading) {
+            expect(err).toBeFalsy();
+            expect(isDownloading).toBeTruthy();
+            c.workTree.setDownloading('/testfile', false, function (err) {
+              expect(err).toBeFalsy();
+              c.workTree.isDownloading('/testfile', function (err, isDownloading) {
+                expect(err).toBeFalsy();
+                expect(isDownloading).toBeFalsy();
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testDownloadingMultiple', function (done) {
+      c.workTree.setDownloading('/testfile', false, function (err) {
+        expect(err).toBeFalsy();
+        c.workTree.isDownloading('/testfile', function (err, isDownloading) {
+          expect(err).toBeFalsy();
+          expect(isDownloading).toBeFalsy();
+          c.workTree.setDownloading('/testfile', true, function (err) {
+            expect(err).toBeFalsy();
+            c.workTree.setDownloading('/testfile', true, function (err) {
+              expect(err).toBeFalsy();
+              c.workTree.isDownloading('/testfile', function (err, isDownloading) {
+                expect(err).toBeFalsy();
+                expect(isDownloading).toBeTruthy();
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testWaitDownload', function (done) {
+      var waited = false;
+      c.workTree.setDownloading('/testfile', true, function (err) {
+        expect(err).toBeFalsy();
+        c.workTree.waitOnDownload('/testfile', function (err) {
+          expect(err).toBeFalsy();
+          expect(waited).toBeTruthy();
+
+          // it shouldn't wait a second time
+          c.workTree.waitOnDownload('/testfile', function (err) {
+            expect(err).toBeFalsy();
+            done();
+          });
+        });
+
+        setTimeout(function () {
+          c.workTree.setDownloading('/testfile', false, function (err) {
+            expect(err).toBeFalsy();
+            waited = true;
+          });
+        }, 500);
+      });
+    });
+
+    it('testWaitDownloadNotDownloading', function (done) {
+      c.workTree.waitOnDownload('/testfile', function (err) {
+        expect(err).toBeFalsy();
+        done();
+      });
+    });
+  });
 });
