@@ -96,6 +96,9 @@
         "syncconflict",
         "folderlist",
         "requestqueueinit"
+      ],
+      "preserveCacheFiles": [
+        "request-queue.nedb"
       ]
     }
   }

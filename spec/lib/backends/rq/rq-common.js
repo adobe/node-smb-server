@@ -47,7 +47,10 @@ function RQCommon(config) {
     },
     localTree: self.localTree,
     tree: self.remoteTree,
-    contentCacheTTL: 200
+    contentCacheTTL: 200,
+    preserveCacheFiles: [
+      'request-queue.nedb'
+    ]
   };
   self.remoteShare = new TestShare('test', self.config);
   self.testShare = new RQShare(
