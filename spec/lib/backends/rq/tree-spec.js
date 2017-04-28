@@ -1215,4 +1215,83 @@ describe('RQTree', function () {
       });
     });
   });
+
+  describe('ConcurrencyTests', function () {
+    it('testOpenDownloadingFile', function (done) {
+      // in this test we're creating a situation where a file is in the process of being downloaded, and another
+      // "thread" attempts to open the file. we're ensuring that if this happens then we don't end up with a file
+      // whose length is incorrect
+      c.remoteShare.setFetchCb(function (fetched, cb) {
+        // set the fetched file's length to 1 to simulate that the file isn't completely downloaded
+        fetched.setLength(1, function (err) {
+          expect(err).toBeFalsy();
+          fetched.close(function (err) {
+            expect(err).toBeFalsy();
+            setTimeout(function () {
+              cb();
+            }, 500); // delay the fetch to give time for the other thread to open the same file
+          });
+        });
+      });
+      c.addFile(c.remoteTree, '/somefile', function () {
+        c.testTree.open('/somefile', function (err, file) {
+          expect(err).toBeFalsy();
+          // flush the file to force a cache of the file
+          file.flush(function (err) {
+            expect(err).toBeFalsy();
+            c.expectLocalFileExist('/somefile', true, false, function () {
+              done();
+            });
+          });
+          // a second thread attempts to open the same file before the fetch is complete
+          setTimeout(function () {
+            c.testTree.open('/somefile', function (err, testFile) {
+              expect(err).toBeFalsy();
+              expect(testFile.size()).toEqual('/somefile'.length);
+            });
+          }, 50);
+        });
+      });
+    });
+
+    it('testMultipleDownloadFile', function (done) {
+      // this test verifies the case where multiple "threads" attempt to download the same file
+      c.remoteShare.setFetchCb(function (fetched, cb) {
+        setTimeout(function () {
+          cb();
+        }, 500); // delay the initial fetch to give another thread time to download the same file
+      });
+
+      c.addFile(c.remoteTree, '/somefile', function () {
+        c.testTree.open('/somefile', function (err, file) {
+          expect(err).toBeFalsy();
+          file.setLength(100, function (err) {
+            expect(err).toBeFalsy();
+            expect(file.size()).toEqual(100);
+            file.close(function (err) {
+              expect(err).toBeFalsy();
+              c.expectLocalFileExist('/somefile', true, false, function () {
+                // this thread should finish first, so don't call done() here
+              });
+            });
+          });
+        });
+
+        // a second thread attempts to download the same file before the first fetch is complete
+        setTimeout(function () {
+          c.testTree.open('/somefile', function (err, testFile) {
+            expect(err).toBeFalsy();
+            testFile.flush(function (err) {
+              expect(err).toBeFalsy();
+              c.testTree.open('/somefile', function (err, verifyFile) {
+                expect(err).toBeFalsy();
+                expect(verifyFile.size()).toEqual(100);
+                done();
+              });
+            });
+          });
+        }, 50);
+      });
+    });
+  });
 });

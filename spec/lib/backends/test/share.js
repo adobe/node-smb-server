@@ -20,8 +20,13 @@ var TestShare = function (name, config) {
 
     this.connectedTree = config.tree;
     this.localTree = config.localTree;
+    this.fetchCb = function (path, cb) { cb(); };
 
     Share.call(this, name, config);
+};
+
+TestShare.prototype.setFetchCb = function (cb) {
+  this.fetchCb = cb;
 };
 
 TestShare.prototype.connect = function (session, shareLevelPassword, cb) {
@@ -38,37 +43,40 @@ TestShare.prototype.buildResourceUrl = function (path) {
 };
 
 TestShare.prototype.fetchResource = function (path, cb) {
-    var self = this;
-    var fetchFile = function () {
-        self.connectedTree.open(path, function (err, file) {
-            if (err) {
-                cb(err);
-            } else {
-                var buffer = new Array(file.size());
-                file.read(buffer, 0, file.size(), 0, function (err, read, readBuffer) {
-                    self.localTree.addFile(file.getPath(), file.isReadOnly(), buffer, function (err) {
-                        if (err) {
-                            cb(err);
-                        } else {
-                            cb(null, path);
-                        }
-                    });
-                });
-            }
-        });
-    }
+  var self = this;
 
-    if (!self.localTree) {
-        cb('attempting to fetch resource but no local tree is defined');
+  var fetchFile = function () {
+    self.connectedTree.open(path, function (err, file) {
+      if (err) {
+        cb(err);
+      } else {
+        var buffer = new Array(file.size());
+        file.read(buffer, 0, file.size(), 0, function (err, read, readBuffer) {
+          self.localTree.addFile(file.getPath(), file.isReadOnly(), buffer, function (err, localFile) {
+            if (err) {
+              cb(err);
+            } else {
+              self.fetchCb(localFile, function () {
+                cb(null, path);
+              });
+            }
+          });
+        });
+      }
+    });
+  };
+
+  if (!self.localTree) {
+    cb('attempting to fetch resource but no local tree is defined');
+  } else {
+    if (!self.connectedTree) {
+      self.connect({}, {}, function (err, tree) {
+        fetchFile();
+      });
     } else {
-        if (!self.connectedTree) {
-            self.connect({}, {}, function (err, tree) {
-                fetchFile();
-            });
-        } else {
-            fetchFile();
-        }
+      fetchFile();
     }
+  }
 };
 
 TestShare.prototype.applyRequestDefaults = function (options) {
