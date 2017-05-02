@@ -184,39 +184,6 @@ describe('RQFile', function () {
                       expect(err).toBeFalsy();
                       c.localTree.open('/testfile', function (err, file) {
                         expect(err).toBeFalsy();
-                        expect(file.isReadOnly()).toBeTruthy();
-                        done();
-                      });
-                    });
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
-    });
-
-    it('testCacheFileIsNotReadOnly', function (done) {
-      c.addCachedFile('/testfile', function () {
-        c.localTree.open('/testfile', function (err, file) {
-          expect(err).toBeFalsy();
-          file.setReadOnly(true, function (err) {
-            expect(err).toBeFalsy();
-            file.close(function (err) {
-              expect(err).toBeFalsy();
-              c.remoteTree.open('/testfile', function (err, file) {
-                expect(err).toBeFalsy();
-                expect(file.isReadOnly()).toBeFalsy();
-                c.testTree.open('/testfile', function (err, file) {
-                  expect(err).toBeFalsy();
-                  expect(file.isReadOnly()).toBeTruthy();
-                  file.cacheFile(function (err) {
-                    expect(err).toBeFalsy();
-                    file.close(function (err) {
-                      expect(err).toBeFalsy();
-                      c.localTree.open('/testfile', function (err, file) {
-                        expect(err).toBeFalsy();
                         expect(file.isReadOnly()).toBeFalsy();
                         done();
                       });
@@ -225,7 +192,6 @@ describe('RQFile', function () {
                 });
               });
             });
-
           });
         });
       });

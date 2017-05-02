@@ -260,6 +260,20 @@ describe('RQProcessor', function () {
       });
     });
 
+    it('testSyncCheckedOut', function (done) {
+      c.addQueuedFile('/testfile', function (file) {
+        c.fs.setTestFile('/local/path/testfile', '/testfile');
+        nextStatusCode = 423;
+        processor.sync(config, function (err) {
+          expect(err).toBeFalsy();
+          c.expectQueuedMethod('/', 'testfile', false, function () {
+            expect(processor.emit).toHaveBeenCalledWith('syncerr', {path: '/testfile', file: '/local/path/testfile', method: 'POST', err: jasmine.any(String)});
+            done();
+          });
+        });
+      });
+    });
+
     it('testSyncEncoded', function (done) {
       var remoteEncodedName = '/%EC%9D%B4%EB%91%90%E5%90%8F%E8%AE%80.jpg';
       var remoteFileName = decodeURI(remoteEncodedName);
