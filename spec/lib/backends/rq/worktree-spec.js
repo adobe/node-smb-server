@@ -23,11 +23,14 @@ describe('WorkTree', function () {
 
   describe('Open', function () {
     it('testOpenMissing', function (done) {
-      c.workTree.open('/file', function (err, file) {
+      c.localTree.createFile('/file', function (err) {
         expect(err).toBeFalsy();
-        c.expectLocalFileExistExt('/file', false, true, false, function () {
-          expect(c.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
-          done();
+        c.workTree.open('/file', function (err, file) {
+          expect(err).toBeFalsy();
+          c.expectLocalFileExistExt('/file', true, true, false, function () {
+            expect(c.testShare.emit.mostRecentCall.args[0]).toEqual('syncconflict');
+            done();
+          });
         });
       });
     });

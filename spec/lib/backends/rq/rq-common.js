@@ -17,6 +17,7 @@ var TestTree = require('../test/tree');
 var TestShare = require('../test/share');
 var util = require('util');
 var utils = require('../../../../lib/utils');
+var consts = require('../../../../lib/backends/rq/common');
 
 function RQCommon(config) {
   var self = this;
@@ -33,7 +34,6 @@ function RQCommon(config) {
 
   self.remoteTree = new TestTree();
   self.localTree = new TestTree();
-  self.localWorkTree = new TestTree();
   self.tempFilesTree = new TestTree();
 
   self.config = {
@@ -49,7 +49,7 @@ function RQCommon(config) {
     tree: self.remoteTree,
     contentCacheTTL: 200,
     preserveCacheFiles: [
-      'request-queue.nedb'
+      consts.REQUEST_DB
     ]
   };
   self.remoteShare = new TestShare('test', self.config);
@@ -57,15 +57,13 @@ function RQCommon(config) {
     'rq',
     self.config,
     self.remoteShare,
-    self.remoteTree,
-    self.localTree,
-    self.localWorkTree);
+    self.remoteTree);
   self.testTree = new RQTree(
     self.testShare,
     self.remoteTree,
     {
       localTree: self.localTree,
-      workTree: self.localWorkTree,
+      workTree: self.localTree,
       rqdb: self.db,
       noprocessor: true
     });
@@ -151,7 +149,7 @@ RQCommon.prototype.expectLocalFileExistExt = function (fileName, localExists, wo
     self.workTree.exists(fileName, function (err, exists) {
       expect(err).toBeFalsy();
       expect(exists).toEqual(workExists);
-      self.workTree.exists(self.testTree.getCreateFileName(fileName), function (err, exists) {
+      self.workTree.isCreatedLocally(fileName, function (err, exists) {
         expect(err).toBeFalsy();
         expect(exists).toEqual(createExists);
         cb();

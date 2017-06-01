@@ -84,12 +84,13 @@ describe('RQBTree', function () {
     });
 
     it('testExistsLocalWork', function (done) {
-        c.addFile(c.localWorkTree, '/test', function () {
-            c.testTree.existsLocal('/test', function (err, exists) {
-                expect(err).toBeFalsy();
-                expect(exists).toBeTruthy();
-                done();
-            });
+        c.workTree.createFile('/test', function (err) {
+          expect(err).toBeFalsy();
+          c.testTree.existsLocal('/test', function (err, exists) {
+            expect(err).toBeFalsy();
+            expect(exists).toBeTruthy();
+            done();
+          });
         });
     });
 
@@ -102,22 +103,24 @@ describe('RQBTree', function () {
     });
 
     it('testIsLocalDirectory', function (done) {
-        c.addFile(c.localWorkTree, '/test', function () {
-            c.testTree.isLocalDirectory('/test', function (err, isdir) {
-                expect(err).toBeFalsy();
-                expect(isdir).toBeFalsy();
-                done();
-            });
+      c.workTree.createFile('/test', function (err) {
+        expect(err).toBeFalsy();
+        c.testTree.isLocalDirectory('/test', function (err, isdir) {
+          expect(err).toBeFalsy();
+          expect(isdir).toBeFalsy();
+          done();
         });
+      });
     });
 
     it('testIsLocalDirectoryTrue', function (done) {
-        c.addDirectory(c.localWorkTree, '/test', function () {
-            c.testTree.isLocalDirectory('/test', function (err, isdir) {
-                expect(err).toBeFalsy();
-                expect(isdir).toBeTruthy();
-                done();
-            });
+      c.workTree.createDirectory('/test', function (err) {
+        expect(err).toBeFalsy();
+        c.testTree.isLocalDirectory('/test', function (err, isdir) {
+          expect(err).toBeFalsy();
+          expect(isdir).toBeTruthy();
+          done();
         });
+      });
     });
 });

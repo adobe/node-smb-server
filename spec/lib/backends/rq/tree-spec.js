@@ -585,19 +585,15 @@ describe('RQTree', function () {
     it('testDeleteLocalDirectoryRecursive', function (done) {
       c.addDirectory(c.localTree, '/removeme', function () {
         c.addLocalFile('/removeme/file1', function () {
-          c.testTree.createFile('/request-queue.nedb', function () {
-            c.addDirectory(c.localTree, '/removeme/subfolder', function () {
-              c.addLocalFile('/removeme/subfolder/file2', function () {
-                c.testTree.deleteLocalDirectoryRecursive('/', function (err) {
-                  expect(err).toBeFalsy();
-                  c.expectPathExist(c.localTree, '/removeme', false, function () {
-                    c.expectPathExist(c.localTree, '/removeme/subfolder', false, function () {
-                      c.expectLocalFileExist('/removeme/file1', false, false, function () {
-                        c.expectLocalFileExist('/removeme/subfolder/file2', false, false, function () {
-                          c.expectLocalFileExistExt('/request-queue.nedb', true, true, true, function () {
-                            c.expectPathExist(c.localTree, '/', true, done);
-                          });
-                        });
+          c.addDirectory(c.localTree, '/removeme/subfolder', function () {
+            c.addLocalFile('/removeme/subfolder/file2', function () {
+              c.testTree.deleteLocalDirectoryRecursive('/', function (err) {
+                expect(err).toBeFalsy();
+                c.expectPathExist(c.localTree, '/removeme', false, function () {
+                  c.expectPathExist(c.localTree, '/removeme/subfolder', false, function () {
+                    c.expectLocalFileExist('/removeme/file1', false, false, function () {
+                      c.expectLocalFileExist('/removeme/subfolder/file2', false, false, function () {
+                        c.expectPathExist(c.localTree, '/', true, done);
                       });
                     });
                   });
@@ -776,10 +772,6 @@ describe('RQTree', function () {
     });
   });
 
-  it('testGetCreateFileName', function () {
-    expect(c.testTree.getCreateFileName('/testfile')).not.toEqual('/testfile');
-  });
-
   it('testCreateFile', function (done) {
     c.testTree.createFile('/testfile1', function (err, file) {
       c.expectLocalFileExist('/testfile1', true, true, done);
@@ -787,7 +779,7 @@ describe('RQTree', function () {
   });
 
   it('testCreateFileWorkExists', function (done) {
-    c.addFile(c.localWorkTree, '/testfile', function () {
+    c.addFile(c.localTree, '/.aem/testfile', function () {
       c.testTree.createFile('/testfile', function (err, file) {
         expect(err).toBeFalsy();
         c.expectLocalFileExist('/testfile', true, true, done);
@@ -980,11 +972,7 @@ describe('RQTree', function () {
               c.expectPathExist(c.remoteTree, '/test', false, function () {
                 c.expectPathExist(c.localTree, '/test', false, function () {
                   c.expectPathExist(c.remoteTree, '/test2', true, function () {
-                    c.expectPathExist(c.localTree, '/test2', true, function () {
-                      c.expectPathExist(c.workTree, '/test', false, function () {
-                        c.expectPathExist(c.workTree, '/test2', true, done);
-                      });
-                    });
+                    c.expectPathExist(c.localTree, '/test2', true, done);
                   });
                 });
               });
@@ -1003,11 +991,7 @@ describe('RQTree', function () {
               c.expectPathExist(c.remoteTree, '/test', true, function () {
                 c.expectPathExist(c.remoteTree, '/.test', false, function () {
                   c.expectPathExist(c.localTree, '/test', false, function () {
-                    c.expectPathExist(c.localTree, '/.test', true, function () {
-                      c.expectPathExist(c.workTree, '/test', false, function () {
-                        c.expectPathExist(c.workTree, '/.test', true, done);
-                      });
-                    });
+                    c.expectPathExist(c.localTree, '/.test', true, done);
                   });
                 });
               });
@@ -1026,11 +1010,7 @@ describe('RQTree', function () {
               c.expectPathExist(c.remoteTree, '/.test', true, function () {
                 c.expectPathExist(c.remoteTree, '/test', false, function () {
                   c.expectPathExist(c.localTree, '/.test', false, function () {
-                    c.expectPathExist(c.localTree, '/test', true, function () {
-                      c.expectPathExist(c.workTree, '/.test', false, function () {
-                        c.expectPathExist(c.workTree, '/test', true, done);
-                      });
-                    });
+                    c.expectPathExist(c.localTree, '/test', true, done);
                   });
                 });
               });
