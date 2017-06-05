@@ -89,7 +89,7 @@ describe('WorkTree', function () {
       c.addCachedFile('/testfile', function () {
         c.workTree.createFile('/testfile', function (err, file) {
           expect(err).toBeFalsy();
-          c.expectLocalFileExist('/testfile', true, true, done);
+          c.expectLocalFileExist('/testfile', true, false, done);
         });
       });
     });
