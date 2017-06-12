@@ -10,6 +10,7 @@
  *  governing permissions and limitations under the License.
  */
 
+var async = require('async');
 var common = require('../../test-common');
 var RQTree = require('../../../../lib/backends/rq/tree');
 var RQShare = require('../../../../lib/backends/rq/share');
@@ -63,23 +64,26 @@ function RQCommon(config) {
     self.remoteTree,
     {
       localTree: self.localTree,
-      workTree: self.localTree,
       rqdb: self.db,
       noprocessor: true
     });
-  self.workTree = self.testTree.work;
+  self.localRawTree = self.localTree;
+  self.localTree = self.testTree.local;
   spyOn(self.remoteTree, 'exists').andCallThrough();
   spyOn(self.remoteTree, 'open').andCallThrough();
   spyOn(self.remoteTree, 'delete').andCallThrough();
   spyOn(self.remoteTree, 'deleteDirectory').andCallThrough();
   spyOn(self.localTree, 'exists').andCallThrough();
-  spyOn(self.workTree, 'exists').andCallThrough();
   spyOn(self.testShare, 'emit').andCallThrough();
 };
 
 util.inherits(RQCommon, common);
 
 RQCommon.prototype.addDirectory = function (tree, dirName, cb) {
+  if (!tree.addDirectory) {
+    // for compatibility, force use of raw local tree if RQLocalTree is provided.
+    tree = this.localRawTree;
+  }
   tree.addDirectory(dirName, false, function (err, file) {
     expect(err).toBeFalsy();
     cb(file);
@@ -87,6 +91,10 @@ RQCommon.prototype.addDirectory = function (tree, dirName, cb) {
 };
 
 RQCommon.prototype.addFile = function (tree, fileName, cb) {
+  if (!tree.addFile) {
+    // for compatibility, force use of raw local tree if RQLocalTree is provided.
+    tree = this.localRawTree;
+  }
   tree.addFile(fileName, false, fileName, function (err, file) {
     expect(err).toBeFalsy();
     cb(file);
@@ -109,35 +117,40 @@ RQCommon.prototype.addFiles = function (tree, numFiles, cb) {
 
 RQCommon.prototype.addLocalFile = function (fileName, cb) {
   var self = this;
-  self.addFile(self.localTree, fileName, function () {
-    self.workTree.createFileExisting(fileName, cb);
+  self.addFile(self.localTree, fileName, function (file) {
+    self.localTree.createFromSource(file, file, false, function (err) {
+      expect(err).toBeFalsy();
+      cb();
+    });
   });
 };
 
 RQCommon.prototype.addLocalFiles = function (numFiles, cb) {
   var self = this;
+  var count = 0;
 
-  function addWorkFile(index) {
-    if (index < numFiles) {
-      self.workTree.createFileExisting('/testfile' + (index + 1), function (err) {
-        expect(err).toBeFalsy();
-        addWorkFile(index + 1);
-      });
-    } else {
-      cb();
-    }
-  }
-
-  self.addFiles(self.localTree, numFiles, function () {
-    addWorkFile(0);
+  async.whilst(function () {
+    return count < numFiles;
+  }, function (whilstCb) {
+    self.addLocalFile('/testfile' + (count + 1), whilstCb);
+    count++;
+  }, function (err) {
+    expect(err).toBeFalsy();
+    cb();
   });
 };
 
 RQCommon.prototype.addLocalFileWithDates = function (path, readOnly, content, created, lastModified, cb) {
   var self = this;
-  self.localTree.addFileWithDates(path, readOnly, content, created, lastModified, function (err) {
+  self.localRawTree.addFileWithDates(path, readOnly, content, created, lastModified, function (err) {
     expect(err).toBeFalsy();
-    self.workTree.createFileExisting(path, cb);
+    self.localRawTree.open(path, function (err, localFile) {
+      expect(err).toBeFalsy();
+      self.localTree.createFromSource(localFile, false, false, function (err) {
+        expect(err).toBeFalsy();
+        cb();
+      });
+    });
   });
 };
 
@@ -146,14 +159,19 @@ RQCommon.prototype.expectLocalFileExistExt = function (fileName, localExists, wo
   self.localTree.exists(fileName, function (err, exists) {
     expect(err).toBeFalsy();
     expect(exists).toEqual(localExists);
-    self.workTree.exists(fileName, function (err, exists) {
+    self.localTree.cacheInfoExists(fileName, function (err, exists) {
       expect(err).toBeFalsy();
       expect(exists).toEqual(workExists);
-      self.workTree.isCreatedLocally(fileName, function (err, exists) {
-        expect(err).toBeFalsy();
-        expect(exists).toEqual(createExists);
+      if (exists) {
+        self.localTree.isCreatedLocally(fileName, function (err, exists) {
+          expect(err).toBeFalsy();
+          expect(exists).toEqual(createExists);
+          cb();
+        });
+      } else {
+        expect(false).toEqual(createExists);
         cb();
-      });
+      }
     });
   });
 };
@@ -166,6 +184,20 @@ RQCommon.prototype.expectPathExist = function (tree, path, doesExist, cb) {
   tree.exists(path, function (err, exists) {
     expect(err).toBeFalsy();
     expect(exists).toEqual(doesExist);
+    cb();
+  });
+};
+
+RQCommon.prototype.expectFileModifiedDate = function (path, modifiedTime, toEqual, cb) {
+  var self = this;
+  self.testTree.open(path, function (err, file) {
+    expect(err).toBeFalsy();
+    console.log(file.lastModified());
+    if (toEqual) {
+      expect(file.lastModified()).toEqual(toEqual);
+    } else {
+      expect(file.lastModified()).not.toEqual(toEqual);
+    }
     cb();
   });
 };

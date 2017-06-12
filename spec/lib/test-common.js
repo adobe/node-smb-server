@@ -31,12 +31,11 @@ function TestCommon() {
   };
 
   self.fs = {
-    setTestFile: function (filePath, data) {
+    setTestFileWithDates: function (filePath, data, created, modified) {
       if (this.allFiles[filePath] === undefined) {
-        var cdate = new Date();
         this.allFiles[filePath] = {
-          ctime: cdate,
-          mtime: cdate,
+          ctime: created,
+          mtime: modified,
           data: data,
           size: data.length,
           isFile: function () {
@@ -48,6 +47,10 @@ function TestCommon() {
       } else {
         this.allFiles[filePath]['data'] = data;
       }
+    },
+    setTestFile: function (filePath, data) {
+      var cdate = new Date();
+      this.setTestFileWithDates(filePath, data, cdate, cdate);
     },
     setTestFolder: function (folderPath) {
       if (this.allFiles[folderPath] === undefined) {

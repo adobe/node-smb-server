@@ -64,7 +64,7 @@ describe('RQBTree', function () {
 
     it('testRenameLocal', function (done) {
         c.addFile(c.localTree, '/test', function () {
-            c.testTree.renameLocal('/test', '/test2', function (err) {
+            c.testTree.renameLocal('/test', '/test2', true, function (err) {
                 expect(err).toBeFalsy();
                 c.expectLocalFileExistExt('/test', true, false, false, function () {
                     c.expectLocalFileExistExt('/test2', false, false, false, done);
@@ -74,7 +74,7 @@ describe('RQBTree', function () {
     });
 
     it('testExistsLocal', function (done) {
-        c.addFile(c.localTree, '/test', function () {
+        c.addFile(c.localRawTree, '/test', function () {
             c.testTree.existsLocal('/test', function (err, exists) {
                 expect(err).toBeFalsy();
                 expect(exists).toBeFalsy();
@@ -84,7 +84,7 @@ describe('RQBTree', function () {
     });
 
     it('testExistsLocalWork', function (done) {
-        c.workTree.createFile('/test', function (err) {
+        c.localRawTree.createFile('/.aem/test.json', function (err) {
           expect(err).toBeFalsy();
           c.testTree.existsLocal('/test', function (err, exists) {
             expect(err).toBeFalsy();
@@ -103,7 +103,7 @@ describe('RQBTree', function () {
     });
 
     it('testIsLocalDirectory', function (done) {
-      c.workTree.createFile('/test', function (err) {
+      c.localRawTree.createFile('/.aem/test.json', function (err) {
         expect(err).toBeFalsy();
         c.testTree.isLocalDirectory('/test', function (err, isdir) {
           expect(err).toBeFalsy();
@@ -114,7 +114,7 @@ describe('RQBTree', function () {
     });
 
     it('testIsLocalDirectoryTrue', function (done) {
-      c.workTree.createDirectory('/test', function (err) {
+      c.localRawTree.createDirectory('/test', function (err) {
         expect(err).toBeFalsy();
         c.testTree.isLocalDirectory('/test', function (err, isdir) {
           expect(err).toBeFalsy();

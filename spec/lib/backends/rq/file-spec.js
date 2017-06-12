@@ -87,7 +87,7 @@ describe('RQFile', function () {
               c.testTree.open('/testfile', function (err, newRqFile) {
                 newRqFile.cacheFile(function (err, newLocalFile) {
                   expect(err).toBeFalsy();
-                  expect(localFile.created()).not.toEqual(newLocalFile.created());
+                  expect(localFile.created()).toEqual(newLocalFile.created());
                   expect(localFile.lastModified()).not.toEqual(newLocalFile.lastModified());
                   done();
                 });
@@ -289,11 +289,15 @@ describe('RQFile', function () {
                 expect(err).toBeFalsy();
                 c.localTree.open('/testfile', function (err, localFile) {
                   expect(err).toBeFalsy();
-                  expect(localFile.data.content.join('')).toEqual('0testfile');
-                  c.remoteTree.open('/testfile', function (err, remoteFile) {
+                  var buf2 = new Array(localFile.size());
+                  localFile.read(buf2, 0, localFile.size(), 0, function (err) {
                     expect(err).toBeFalsy();
-                    expect(remoteFile.data.content).toEqual('/testfile');
-                    done();
+                    expect(buf2.join('')).toEqual('0testfile');
+                    c.remoteTree.open('/testfile', function (err, remoteFile) {
+                      expect(err).toBeFalsy();
+                      expect(remoteFile.data.content).toEqual('/testfile');
+                      done();
+                    });
                   });
                 });
               });
@@ -318,8 +322,12 @@ describe('RQFile', function () {
                   expect(err).toBeFalsy();
                   c.localTree.open('/testfile', function (err, localFile) {
                     expect(err).toBeFalsy();
-                    expect(localFile.data.content.join('')).toEqual('/Testfile');
-                    done();
+                    var buf2 = new Array(localFile.size());
+                    localFile.read(buf2, 0, localFile.size(), 0, function (err) {
+                      expect(err).toBeFalsy();
+                      expect(buf2.join('')).toEqual('/Testfile');
+                      done();
+                    });
                   });
                 });
               });

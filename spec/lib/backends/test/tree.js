@@ -18,14 +18,15 @@ var Tree = require('../../../../lib/spi/tree');
 var TestFile = require('./file');
 var utils = require('../../../../lib/utils');
 
-var TestTree = function () {
-    if (!(this instanceof TestTree)) {
-        return new TestTree();
-    }
+var TestTree = function (options) {
+  if (!(this instanceof TestTree)) {
+    return new TestTree();
+  }
 
-    this.entities = new Datastore();
+  this.entities = new Datastore();
+  this.options = options || {};
 
-    Tree.call(this);
+  Tree.call(this);
 };
 
 util.inherits(TestTree, Tree);
@@ -225,15 +226,23 @@ TestTree.prototype.deleteDirectory = function (name, cb) {
         } else if (!exists) {
             cb('path to delete does not exist ' + name);
         } else {
-            self.entities.remove({$and: [{path: utils.getParentPath(name)}, {name: utils.getPathName(name)}, {isFile: false}]}, {multi: true}, function (err, numRemoved) {
+          self.entities.find({path: name}, function (err, docs) {
+            if (err) {
+              cb(err);
+            } else if (docs.length && !self.options.enforceEmptyDirs) {
+              cb('directory ' + name + ' is not empty. cannot be deleted');
+            } else {
+              self.entities.remove({$and: [{path: utils.getParentPath(name)}, {name: utils.getPathName(name)}, {isFile: false}]}, {multi: true}, function (err, numRemoved) {
                 if (err) {
-                    cb(err);
+                  cb(err);
                 } else if (numRemoved != 1) {
-                    cb('unexpected number of directories deleted: ' + numRemoved);
+                  cb('unexpected number of directories deleted: ' + numRemoved);
                 } else {
-                    cb();
+                  cb();
                 }
-            });
+              });
+            }
+          });
         }
     });
 };
