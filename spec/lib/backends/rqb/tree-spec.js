@@ -11,8 +11,8 @@
  */
 
 var RQCommon = require('../rq/rq-common');
-var RQBShare = require('../../../../lib/backends/rqb/share');
-var RQBTree = require('../../../../lib/backends/rqb/tree');
+var RQBShare = RQCommon.require(__dirname, '../../../../lib/backends/rqb/share');
+var RQBTree = RQCommon.require(__dirname, '../../../../lib/backends/rqb/tree');
 
 describe('RQBTree', function () {
     var c;

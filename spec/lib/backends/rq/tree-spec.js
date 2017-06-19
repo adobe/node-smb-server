@@ -10,9 +10,9 @@
  *  governing permissions and limitations under the License.
  */
 
-var RQTree = require('../../../../lib/backends/rq/tree');
-var utils = require('../../../../lib/utils');
 var RQCommon = require('./rq-common');
+var RQTree = RQCommon.require(__dirname, '../../../../lib/backends/rq/tree');
+var utils = RQCommon.require(__dirname, '../../../../lib/utils');
 
 describe('RQTree', function () {
   var c;
@@ -88,31 +88,36 @@ describe('RQTree', function () {
 
   describe('RefreshWorkFiles', function () {
     it('testRefreshWorkFiles', function (done) {
-      c.addFile(c.remoteTree, '/testfile', function () {
-        c.testTree.open('/testfile', function (err, rqFile) {
-          rqFile.cacheFile(function (err, cached) {
-            c.expectLocalFileExist('/testfile', true, false, function () {
-              c.localTree.open('/testfile', function (err, file) {
-                expect(err).toBeFalsy();
-                expect(file.getLastSyncDate()).toBeTruthy();
-                var lastSynced = file.getLastSyncDate();
-                var lastModified = file.lastModified();
-                setTimeout(function () {
-                  // pause ever so slightly to allow time to change
-                  c.testTree.refreshWorkFiles('/testfile', function (err) {
+      c.addFile(c.remoteTree, '/testfile', function (remoteFile) {
+        setTimeout(function () {
+          c.testTree.open('/testfile', function (err, rqFile) {
+            rqFile.cacheFile(function (err, cached) {
+              c.expectLocalFileExist('/testfile', true, false, function () {
+                c.localRawTree.open('/testfile', function (err, localFile) {
+                  c.localTree.open('/testfile', function (err, file) {
                     expect(err).toBeFalsy();
-                    c.localTree.open('/testfile', function (err, file) {
-                      expect(err).toBeFalsy();
-                      expect(file.getLastSyncDate()).toBeGreaterThan(lastSynced);
-                      expect(file.lastModified()).toEqual(lastModified);
-                      done();
-                    });
+                    expect(file.getLastSyncDate()).toBeTruthy();
+                    var lastSynced = file.getLastSyncDate();
+                    var lastModified = file.lastModified();
+                    expect(file.lastModified()).toEqual(remoteFile.lastModified());
+                    setTimeout(function () {
+                      // pause ever so slightly to allow time to change
+                      c.testTree.refreshWorkFiles('/testfile', function (err) {
+                        expect(err).toBeFalsy();
+                        c.localTree.open('/testfile', function (err, file) {
+                          expect(err).toBeFalsy();
+                          expect(file.getLastSyncDate()).toBeGreaterThan(lastSynced);
+                          expect(file.lastModified()).toEqual(localFile.lastModified());
+                          done();
+                        });
+                      });
+                    }, 10);
                   });
-                }, 10);
+                });
               });
             });
           });
-        });
+        }, 10);
       });
     });
 
@@ -1164,84 +1169,77 @@ describe('RQTree', function () {
       // in this test we're creating a situation where a file is in the process of being downloaded, and another
       // "thread" attempts to open the file. we're ensuring that if this happens then we don't end up with a file
       // whose length is incorrect
-      c.remoteShare.setFetchCb(function (fetched, cb) {
-        // set the fetched file's length to 1 to simulate that the file isn't completely downloaded
-        fetched.setLength(1, function (err) {
+      c.setPipeDelay(function (delayCb) {
+        // a second thread attempts to open the same file before the fetch is complete
+        c.testTree.open('/somefile', function (err, testFile) {
           expect(err).toBeFalsy();
-          fetched.close(function (err) {
-            expect(err).toBeFalsy();
-            setTimeout(function () {
-              cb();
-            }, 500); // delay the fetch to give time for the other thread to open the same file
-          });
+          expect(testFile.size()).toEqual('/somefile'.length);
+          delayCb();
         });
       });
-      c.addFile(c.remoteTree, '/somefile', function () {
+      c.addFileWithContent(c.remoteTree, '/somefile', '/somefile', function () {
         c.testTree.open('/somefile', function (err, file) {
           expect(err).toBeFalsy();
           // flush the file to force a cache of the file
           file.flush(function (err) {
             expect(err).toBeFalsy();
             c.expectLocalFileExist('/somefile', true, false, function () {
-              done();
+              c.localRawTree.open('/somefile', function (err, fetched) {
+                expect(err).toBeFalsy();
+                // set the fetched file's length to 1 to simulate that the file isn't completely downloaded
+                fetched.setLength(1, function (err) {
+                  expect(err).toBeFalsy();
+                  fetched.close(function (err) {
+                    expect(err).toBeFalsy();
+                    done();
+                  });
+                });
+              });
             });
           });
-          // a second thread attempts to open the same file before the fetch is complete
-          setTimeout(function () {
-            c.testTree.open('/somefile', function (err, testFile) {
-              expect(err).toBeFalsy();
-              expect(testFile.size()).toEqual('/somefile'.length);
-            });
-          }, 50);
         });
       });
     });
 
     it('testMultipleDownloadFile', function (done) {
       // this test verifies the case where multiple "threads" attempt to download the same file
-      c.remoteShare.setFetchCb(function (fetched, cb) {
-        setTimeout(function () {
-          cb();
-        }, 500); // delay the initial fetch to give another thread time to download the same file
+      c.setPipeDelay(function (delayCb) {
+        // a second thread attempts to download the same file before the first fetch is complete
+        c.testTree.open('/multiplefile', function (err, testFile) {
+          expect(err).toBeFalsy();
+          testFile.flush(function (err) {
+            expect(err).toBeFalsy();
+            c.testTree.open('/multiplefile', function (err, verifyFile) {
+              expect(err).toBeFalsy();
+              expect(verifyFile.size()).toEqual(100);
+              delayCb();
+            });
+          });
+        });
       });
 
-      c.addFile(c.remoteTree, '/somefile', function () {
-        c.testTree.open('/somefile', function (err, file) {
+      // first "thread" downloads the file
+      c.addFileWithContent(c.remoteTree, '/multiplefile', '/multiplefile', function () {
+        c.testTree.open('/multiplefile', function (err, file) {
           expect(err).toBeFalsy();
           file.setLength(100, function (err) {
             expect(err).toBeFalsy();
             expect(file.size()).toEqual(100);
             file.close(function (err) {
               expect(err).toBeFalsy();
-              c.expectLocalFileExist('/somefile', true, false, function () {
-                // this thread should finish first, so don't call done() here
-              });
-            });
-          });
-        });
-
-        // a second thread attempts to download the same file before the first fetch is complete
-        setTimeout(function () {
-          c.testTree.open('/somefile', function (err, testFile) {
-            expect(err).toBeFalsy();
-            testFile.flush(function (err) {
-              expect(err).toBeFalsy();
-              c.testTree.open('/somefile', function (err, verifyFile) {
-                expect(err).toBeFalsy();
-                expect(verifyFile.size()).toEqual(100);
+              c.expectLocalFileExist('/multiplefile', true, false, function () {
                 done();
               });
             });
           });
-        }, 50);
+        });
       });
     });
   });
 
   describe('DateTests', function () {
     it('testLastModifiedCachedFile', function (done) {
-      c.remoteTree.addFileWithDates('/testfile', false, 'content', 123456, 123459, function (err) {
-        expect(err).toBeFalsy();
+      c.addFileWithDates(c.remoteTree, '/testfile', 'content', 123456, 123459, function () {
         c.testTree.open('/testfile', function (err, file) {
           expect(err).toBeFalsy();
           file.cacheFile(function (err) {
@@ -1257,6 +1255,43 @@ describe('RQTree', function () {
           });
         });
       });
+    });
+  });
+
+  describe('IllustratorTests', function () {
+    it('testIllustratorCreate', function (done) {
+      // create a new file
+      c.addQueuedFile('/test', function (origFile) {
+        // "save" the new file by moving it to a temp file, then moving it back
+        c.testTree.rename('/test', '/.test', function (err) {
+          expect(err).toBeFalsy();
+          c.expectLocalFileExist('/test', false, false, function () {
+            c.expectLocalFileExistExt('/.test', true, false, false, function () {
+              c.expectQueuedMethod('/', 'test', false, function () {
+                c.testTree.rename('/.test', '/test', function (err) {
+                  expect(err).toBeFalsy();
+                  c.expectLocalFileExist('/test', true, true, function () {
+                    c.expectLocalFileExist('/.temp', false, false, function () {
+                      c.expectQueuedMethod('/', 'test', 'PUT', function () {
+                        c.testTree.open('/test', function (err, file) {
+                          expect(err).toBeFalsy();
+                          expect(origFile.created()).not.toEqual(file.created());
+                          expect(origFile.lastModified()).not.toEqual(file.lastModified());
+                          done();
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testIllustratorUpdate', function (done) {
+      done();
     });
   });
 });

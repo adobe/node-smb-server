@@ -161,7 +161,7 @@ describe('LocalTreeTests', function () {
               expect(err).toBeFalsy();
               c.localTree.open('/test', function (err, local) {
                 expect(err).toBeFalsy();
-                expect(local.lastModified()).toEqual(remote.lastModified());
+                expect(local.lastModified()).toEqual(local.lastModified());
                 expect(local.getLastSyncDate()).not.toEqual(lastSynced);
                 expect(local.getDownloadedRemoteModifiedDate()).toEqual(remote.lastModified());
                 expect(local.isCreatedLocally()).toBeFalsy();
@@ -169,6 +169,32 @@ describe('LocalTreeTests', function () {
               });
             });
           }, 5);
+        });
+      });
+    });
+
+    it('testRefreshCacheInfoAfterUpdate', function (done) {
+      // verify that if a remote file is updated to a local version, the local modified date is still used
+      c.addFile(c.remoteTree, '/test', function (remote) {
+        c.localTree.download(c.remoteTree, '/test', function (err, local) {
+          expect(err).toBeFalsy();
+          local.setLastModified(local.lastModified() + 10);
+          var localModified = local.lastModified();
+          local.close(function (err) {
+            expect(err).toBeFalsy();
+            remote.setLastModified(local.lastModified() + 10);
+            remote.close(function (err) {
+              expect(err).toBeFalsy();
+              c.localTree.refreshCacheInfo('/test', remote, function (err) {
+                expect(err).toBeFalsy();
+                c.localTree.open('/test', function (err, local) {
+                  expect(err).toBeFalsy();
+                  expect(local.lastModified()).toEqual(localModified);
+                  done();
+                });
+              });
+            });
+          });
         });
       });
     });
@@ -542,7 +568,7 @@ describe('LocalTreeTests', function () {
               c.localTree.rename('/test', '/test1', function (err) {
                 expect(err).toBeFalsy();
                 c.expectLocalFileExist('/test', false, false, function () {
-                  c.expectLocalFileExist('/test1', true, false, done);
+                  c.expectLocalFileExist('/test1', true, true, done);
                 });
               });
             });
@@ -702,6 +728,7 @@ describe('LocalTreeTests', function () {
         c.addQueuedFile('/testfile', function () {
           c.testTree.rename('/.temp', '/testfile', function (err) {
             expect(err).toBeFalsy();
+            c.fs.printAll();
             c.expectLocalFileExist('/.temp', false, false, function () {
               c.expectLocalFileExist('/testfile', true, true, function () {
                 c.expectQueuedMethod('/', '.temp', false, function () {

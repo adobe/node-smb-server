@@ -12,7 +12,7 @@
 
 var RQCommon = require('./rq-common');
 
-var RQLocalFile = require('../../../../lib/backends/rq/localfile');
+var RQLocalFile = RQCommon.require(__dirname, '../../../../lib/backends/rq/localfile');
 
 describe('LocalFileTest', function () {
   var c;
@@ -22,37 +22,29 @@ describe('LocalFileTest', function () {
   });
 
   function _getCacheInfo(localLastModified, remoteLastModified, created) {
-    return _getCacheInfoExt(localLastModified, 0, 0, 0, remoteLastModified, 0, 0, 0, created);
+    return _getCacheInfoExt(localLastModified, remoteLastModified, 0, created, false);
   }
 
   function _getCacheInfoExt(
     localLastModified,
-    localLastChanged,
-    localCreated,
-    localLastAccessed,
     remoteLastModified,
-    remoteLastChanged,
     remoteCreated,
-    remoteLastAccessed,
-    created) {
+    created,
+    refreshed) {
 
     var data = {
       local: {
-        lastModified: localLastModified,
-        lastChanged: localLastChanged,
-        created: localCreated,
-        lastAccessed: localLastAccessed
+        lastModified: localLastModified
       },
       created: created,
+      refreshed: refreshed,
       synced: new Date().getTime()
     };
 
-    if (remoteLastModified || remoteLastChanged || remoteCreated || remoteLastAccessed) {
+    if (remoteLastModified || remoteCreated) {
       data['remote'] = {
         lastModified: remoteLastModified,
-        lastChanged: remoteLastChanged,
         created: remoteCreated,
-        lastAccessed: remoteLastAccessed
       };
     }
 
@@ -65,7 +57,7 @@ describe('LocalFileTest', function () {
       if (info) {
         info = JSON.stringify(info);
       }
-      c.localRawTree.addFileWithDates('/.aem/test', false, info, 12345, 123456, function () {
+      c.addFileWithDates(c.localRawTree, '/.aem/test', info, 12345, 123456, function () {
         c.addFile(c.localRawTree, '/test', function (file) {
           c.localRawTree.open('/.aem/test', function (err, infoFile) {
             expect(err).toBeFalsy();
@@ -212,19 +204,18 @@ describe('LocalFileTest', function () {
     it('testDatesRemote', function (done) {
       c.addFile(c.localRawTree, '/test', function (local) {
         var file = new RQLocalFile(local, _getCacheInfoExt(
-          local.lastModified(), local.lastChanged(), local.created(), local.lastAccessed(),
-          12345, 12346, 12347, 12348,
-          false
+          local.lastModified(), 12345, 12346,
+          false, false
         ), c.localTree);
         expect(file.lastModified()).toEqual(12345);
-        expect(file.lastChanged()).toEqual(12346);
-        expect(file.created()).toEqual(12347);
-        expect(file.lastAccessed()).toEqual(12348);
+        expect(file.lastChanged()).toEqual(file.lastModified());
+        expect(file.created()).toEqual(12346);
+        expect(file.lastAccessed()).toEqual(local.lastAccessed());
         file.setLastModified(54321);
         expect(file.lastModified()).toEqual(54321);
         expect(file.lastChanged()).toEqual(54321);
-        expect(file.created()).toEqual(12347);
-        expect(file.lastAccessed()).toEqual(54321);
+        expect(file.created()).toEqual(12346);
+        expect(file.lastAccessed()).toEqual(local.lastChanged());
         done();
       });
     });
@@ -232,9 +223,8 @@ describe('LocalFileTest', function () {
     it('testDatesCreated', function (done) {
       c.addFile(c.localRawTree, '/test', function (local) {
         var file = new RQLocalFile(local, _getCacheInfoExt(
-          local.lastModified(), local.lastChanged(), local.created(), local.lastAccessed(),
-          0, 0, 0, 0,
-          true
+          local.lastModified(), 0, 0,
+          true, false
         ), c.localTree);
         expect(file.lastModified()).toEqual(local.lastModified());
         expect(file.lastChanged()).toEqual(local.lastChanged());
@@ -244,7 +234,7 @@ describe('LocalFileTest', function () {
         expect(file.lastModified()).toEqual(54321);
         expect(file.lastChanged()).toEqual(54321);
         expect(file.created()).toEqual(local.created());
-        expect(file.lastAccessed()).toEqual(54321);
+        expect(file.lastAccessed()).toEqual(local.lastAccessed());
         done();
       });
     });
@@ -252,9 +242,8 @@ describe('LocalFileTest', function () {
     it('testDatesDangling', function (done) {
       c.addFile(c.localRawTree, '/test', function (local) {
         var file = new RQLocalFile(local, _getCacheInfoExt(
-          local.lastModified(), local.lastChanged(), local.created(), local.lastAccessed(),
-          0, 0, 0, 0,
-          false
+          local.lastModified(), 0, 0,
+          false, false
         ), c.localTree);
         expect(file.lastModified()).toEqual(local.lastModified());
         expect(file.lastChanged()).toEqual(local.lastChanged());
@@ -264,7 +253,7 @@ describe('LocalFileTest', function () {
         expect(file.lastModified()).toEqual(54321);
         expect(file.lastChanged()).toEqual(54321);
         expect(file.created()).toEqual(local.created());
-        expect(file.lastAccessed()).toEqual(54321);
+        expect(file.lastAccessed()).toEqual(local.lastAccessed());
         done();
       });
     });
@@ -281,7 +270,7 @@ describe('LocalFileTest', function () {
           file.read(buff, 0, 5, 0, function (err, read, buffer) {
             expect(err).toBeFalsy();
             expect(read).toEqual(5);
-            expect(buffer.join('')).toEqual('hello');
+            expect(buffer.toString('utf8')).toEqual('hello');
             expect(buff.join('')).toEqual('hello');
             done();
           });

@@ -11,7 +11,7 @@
  */
 
 var RQCommon = require('./rq-common');
-var RQFile = require('../../../../lib/backends/rq/file');
+var RQFile = RQCommon.require(__dirname, '../../../../lib/backends/rq/file');
 
 describe('RQFile', function () {
 
@@ -200,7 +200,7 @@ describe('RQFile', function () {
 
   describe('AccessMethods', function () {
     it('testFileAccessMethods', function (done) {
-      c.addFile(c.localTree, '/testfile', function (file) {
+      c.addFileWithContent(c.localTree, '/testfile', '/testfile', function (file) {
         c.testTree.open('/testfile', function (err, rqFile) {
           expect(err).toBeFalsy();
           expect(rqFile.isFile()).toBeTruthy();
@@ -238,7 +238,7 @@ describe('RQFile', function () {
 
   describe('Read', function () {
     it('testReadNotCached', function (done) {
-      c.addFile(c.remoteTree, '/testfile', function (file) {
+      c.addFileWithContent(c.remoteTree, '/testfile', '/testfile', function (file) {
         c.testTree.open('/testfile', function (err, rqFile) {
           expect(err).toBeFalsy();
 
@@ -246,7 +246,7 @@ describe('RQFile', function () {
           rqFile.read(buffer, 0, 10000, 0, function (err, actual, readBytes) {
             expect(err).toBeFalsy();
             expect(buffer.join('')).toEqual('/testfile');
-            expect(readBytes.join('')).toEqual('/testfile');
+            expect(readBytes.toString('utf8')).toEqual('/testfile');
             expect(actual).toEqual(9);
             done();
           });
@@ -255,7 +255,7 @@ describe('RQFile', function () {
     });
 
     it('testReadAlreadyCached', function (done) {
-      c.addFile(c.remoteTree, '/testfile', function () {
+      c.addFileWithContent(c.remoteTree, '/testfile', '/testfile', function () {
         c.testTree.open('/testfile', function (err, rqFile) {
           rqFile.cacheFile(function (err, cached) {
             var buffer = new Array(rqFile.size());
@@ -264,7 +264,7 @@ describe('RQFile', function () {
             rqFile.read(buffer, 1, rqFile.size() - 2, 1, function (err, actual, readBytes) {
               expect(err).toBeFalsy();
               expect(buffer.join('')).toEqual('/testfile');
-              expect(readBytes.join('')).toEqual('testfil');
+              expect(readBytes.toString('utf8')).toEqual('testfil');
               expect(actual).toEqual(7);
               done();
             });
@@ -276,7 +276,7 @@ describe('RQFile', function () {
 
   describe('Write', function () {
     it('testWriteNotCached', function (done) {
-      c.addFile(c.remoteTree, '/testfile', function (file) {
+      c.addFileWithContent(c.remoteTree, '/testfile', '/testfile', function (file) {
         c.testTree.open('/testfile', function (err, rqFile) {
           expect(err).toBeFalsy();
           rqFile.write('0', 0, function (err) {
@@ -295,8 +295,10 @@ describe('RQFile', function () {
                     expect(buf2.join('')).toEqual('0testfile');
                     c.remoteTree.open('/testfile', function (err, remoteFile) {
                       expect(err).toBeFalsy();
-                      expect(remoteFile.data.content).toEqual('/testfile');
-                      done();
+                      c.getFileContent(remoteFile, function (content) {
+                        expect(content).toEqual('/testfile');
+                        done();
+                      });
                     });
                   });
                 });
@@ -308,7 +310,7 @@ describe('RQFile', function () {
     });
 
     it('testWriteAlreadyCached', function (done) {
-      c.addFile(c.remoteTree, '/testfile', function (file) {
+      c.addFileWithContent(c.remoteTree, '/testfile', '/testfile', function (file) {
         c.testTree.open('/testfile', function (err, rqFile) {
           expect(err).toBeFalsy();
           rqFile.cacheFile(function (err, cached) {

@@ -10,15 +10,18 @@
  *  governing permissions and limitations under the License.
  */
 
-var async = require('async');
 var common = require('../../test-common');
-var RQTree = require('../../../../lib/backends/rq/tree');
-var RQShare = require('../../../../lib/backends/rq/share');
-var TestTree = require('../test/tree');
-var TestShare = require('../test/share');
+var async = require('async');
+var RQTree = common.require(__dirname, '../../../../lib/backends/rq/tree');
+var RQShare = common.require(__dirname, '../../../../lib/backends/rq/share');
+var TestTree = common.require(__dirname, '../test/tree');
+var TestShare = common.require(__dirname, '../test/share');
+var FSTree = common.require(__dirname, '../../../../lib/backends/fs/tree');
+var FSShare = common.require(__dirname, '../../../../lib/backends/fs/share');
 var util = require('util');
-var utils = require('../../../../lib/utils');
-var consts = require('../../../../lib/backends/rq/common');
+var utils = common.require(__dirname, '../../../../lib/utils');
+var consts = common.require(__dirname, '../../../../lib/backends/rq/common');
+var Path = require('path');
 
 function RQCommon(config) {
   var self = this;
@@ -33,42 +36,110 @@ function RQCommon(config) {
     RQTree = config.treeType;
   }
 
-  self.remoteTree = new TestTree();
-  self.localTree = new TestTree();
-  self.tempFilesTree = new TestTree();
+  self.localPrefix = "/local/path";
+
+  var remoteShare = new FSShare('remote', {
+    "backend": "remotefs",
+    "description": "test remote share",
+    "path": "/remote/path"
+  });
+  var localShare = new FSShare('local', {
+    "backend": "localfs",
+    "description": "test local share",
+    "path": self.localPrefix
+  });
+  var tempShare = new FSShare('temp', {
+    "backend": "tempfs",
+    "description": "test temp share",
+    "path": "/temp/path"
+  });
+
+  var host = 'testlocalhost';
+  var port = 4502;
+  self.hostPrefix = 'http://' + host + ':' + port;
+  self.urlPrefix = self.hostPrefix + '/api/assets';
+  self.remoteTree = new TestTree(remoteShare, self.urlPrefix, self.request);
+  self.tempFilesTree = new TestTree(tempShare);
 
   self.config = {
-    backend: 'test',
+    backend: 'rqtest',
     modifiedThreshold: 100,
     local: {
+      backend: 'localfs',
       path: '/local/path'
     },
     work: {
+      backend: 'workfs',
       path: '/work/path'
     },
-    localTree: self.localTree,
-    tree: self.remoteTree,
     contentCacheTTL: 200,
     preserveCacheFiles: [
       consts.REQUEST_DB
-    ]
+    ],
+    host: host,
+    port: port
   };
-  self.remoteShare = new TestShare('test', self.config);
   self.testShare = new RQShare(
     'rq',
-    self.config,
-    self.remoteShare,
-    self.remoteTree);
+    self.config);
   self.testTree = new RQTree(
     self.testShare,
     self.remoteTree,
     {
-      localTree: self.localTree,
-      rqdb: self.db,
       noprocessor: true
     });
-  self.localRawTree = self.localTree;
   self.localTree = self.testTree.local;
+  self.localRawTree = self.testTree.local.source;
+
+  function _pathFromUrl(url) {
+    var path = url.substr(self.urlPrefix.length);
+    path = decodeURI(path);
+    return path;
+  }
+
+  self.request.registerCreate(function (url, data, cb) {
+    self.remoteTree.createFile(_pathFromUrl(url), function (err, file) {
+      expect(err).toBeFalsy();
+      file.write(data, 0, function (err) {
+        expect(err).toBeFalsy();
+        file.close(function (err) {
+          expect(err).toBeFalsy();
+          console.log(url, data);
+          cb();
+        });
+      });
+    });
+  });
+
+  self.request.registerUpdate(function (url, data, cb) {
+    self.remoteTree.open(_pathFromUrl(url), function (err, file) {
+      if (err) {
+        console.log('ERROR WHILE UPDATING FROM REQUEST', err);
+        cb();
+      } else {
+        file.setLength(data.length, function (err) {
+          expect(err).toBeFalsy();
+          file.write(data, 0, function (err) {
+            expect(err).toBeFalsy();
+            file.close(function (err) {
+              expect(err).toBeFalsy();
+              cb();
+            });
+          });
+        });
+      }
+    });
+  });
+
+  self.request.registerDelete(function (url, cb) {
+    self.remoteTree.delete(_pathFromUrl(url), function (err) {
+      if (err) {
+        console.log('ERROR WHILE DELETING FROM REQUEST', err);
+      }
+      cb();
+    });
+  });
+
   spyOn(self.remoteTree, 'exists').andCallThrough();
   spyOn(self.remoteTree, 'open').andCallThrough();
   spyOn(self.remoteTree, 'delete').andCallThrough();
@@ -79,14 +150,51 @@ function RQCommon(config) {
 
 util.inherits(RQCommon, common);
 
+RQCommon.require = common.require;
+
+RQCommon.prototype.wasPathRequested = function (path) {
+  return this.request.wasUrlRequested(this.urlPrefix + path);
+};
+
+RQCommon.prototype.registerPathStatusCode = function (path, statusCode) {
+  this.request.registerUrlStatusCode(this.urlPrefix + path, statusCode);
+};
+
+RQCommon.prototype.getFileContent = function (file, cb) {
+  var buffer = new Array(file.size());
+  file.read(buffer, 0, file.size(), 0, function (err) {
+    expect(err).toBeFalsy();
+    cb(buffer.join(''));
+  });
+};
+
 RQCommon.prototype.addDirectory = function (tree, dirName, cb) {
   if (!tree.addDirectory) {
     // for compatibility, force use of raw local tree if RQLocalTree is provided.
     tree = this.localRawTree;
   }
-  tree.addDirectory(dirName, false, function (err, file) {
+  tree.createDirectory(dirName, function (err, file) {
     expect(err).toBeFalsy();
     cb(file);
+  });
+};
+
+RQCommon.prototype.addFileWithContent = function (tree, fileName, content, cb) {
+  var self = this;
+  self.addFile(tree, fileName, function (file, tree) {
+    file.setLength(fileName.length, function (err) {
+      expect(err).toBeFalsy();
+      file.write(fileName, 0, function (err) {
+        expect(err).toBeFalsy();
+        file.close(function (err) {
+          expect(err).toBeFalsy();
+          tree.open(fileName, function (err, file) {
+            expect(err).toBeFalsy();
+            cb(file);
+          });
+        });
+      });
+    });
   });
 };
 
@@ -95,9 +203,24 @@ RQCommon.prototype.addFile = function (tree, fileName, cb) {
     // for compatibility, force use of raw local tree if RQLocalTree is provided.
     tree = this.localRawTree;
   }
-  tree.addFile(fileName, false, fileName, function (err, file) {
+  tree.createFile(fileName, function (err, file) {
     expect(err).toBeFalsy();
-    cb(file);
+    cb(file, tree);
+  });
+};
+
+RQCommon.prototype.addFileWithDates = function (tree, path, content, created, lastModified, cb) {
+  var self = this;
+  var filePath = Path.join(tree.share.path, path);
+  self.fs.createEntityWithDates(filePath, false, content, new Date(created), new Date(lastModified), function (err) {
+    expect(err).toBeFalsy();
+    tree.open(path, function (err, file) {
+      expect(err).toBeFalsy();
+      if (tree.registerFileUrl) {
+        tree.registerFileUrl(path);
+      }
+      cb(file);
+    });
   });
 };
 
@@ -141,17 +264,7 @@ RQCommon.prototype.addLocalFiles = function (numFiles, cb) {
 };
 
 RQCommon.prototype.addLocalFileWithDates = function (path, readOnly, content, created, lastModified, cb) {
-  var self = this;
-  self.localRawTree.addFileWithDates(path, readOnly, content, created, lastModified, function (err) {
-    expect(err).toBeFalsy();
-    self.localRawTree.open(path, function (err, localFile) {
-      expect(err).toBeFalsy();
-      self.localTree.createFromSource(localFile, false, false, function (err) {
-        expect(err).toBeFalsy();
-        cb();
-      });
-    });
-  });
+  this.addFileWithDates(this.localRawTree, path, content, created, lastModified, cb);
 };
 
 RQCommon.prototype.expectLocalFileExistExt = function (fileName, localExists, workExists, createExists, cb) {
@@ -192,7 +305,6 @@ RQCommon.prototype.expectFileModifiedDate = function (path, modifiedTime, toEqua
   var self = this;
   self.testTree.open(path, function (err, file) {
     expect(err).toBeFalsy();
-    console.log(file.lastModified());
     if (toEqual) {
       expect(file.lastModified()).toEqual(toEqual);
     } else {
