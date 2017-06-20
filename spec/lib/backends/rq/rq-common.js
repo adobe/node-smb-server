@@ -156,6 +156,10 @@ RQCommon.prototype.wasPathRequested = function (path) {
   return this.request.wasUrlRequested(this.urlPrefix + path);
 };
 
+RQCommon.prototype.getPathMethodRequestCount = function (path, method) {
+  return this.request.getUrlMethodRequestCount(this.urlPrefix + path, method);
+};
+
 RQCommon.prototype.registerPathStatusCode = function (path, statusCode) {
   this.request.registerUrlStatusCode(this.urlPrefix + path, statusCode);
 };
@@ -169,7 +173,7 @@ RQCommon.prototype.getFileContent = function (file, cb) {
 };
 
 RQCommon.prototype.addDirectory = function (tree, dirName, cb) {
-  if (!tree.addDirectory) {
+  if (!(tree instanceof TestTree)) {
     // for compatibility, force use of raw local tree if RQLocalTree is provided.
     tree = this.localRawTree;
   }
@@ -199,7 +203,7 @@ RQCommon.prototype.addFileWithContent = function (tree, fileName, content, cb) {
 };
 
 RQCommon.prototype.addFile = function (tree, fileName, cb) {
-  if (!tree.addFile) {
+  if (!(tree instanceof TestTree)) {
     // for compatibility, force use of raw local tree if RQLocalTree is provided.
     tree = this.localRawTree;
   }

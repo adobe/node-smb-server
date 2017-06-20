@@ -1256,28 +1256,78 @@ describe('RQTree', function () {
         });
       });
     });
-  });
 
-  describe('IllustratorTests', function () {
-    it('testIllustratorCreate', function (done) {
-      // create a new file
-      c.addQueuedFile('/test', function (origFile) {
-        // "save" the new file by moving it to a temp file, then moving it back
-        c.testTree.rename('/test', '/.test', function (err) {
+    it('testRevertedRemoteVersion', function (done) {
+      c.addCachedFile('/testfile', function () {
+        c.remoteTree.open('/testfile', function (err, file) {
           expect(err).toBeFalsy();
-          c.expectLocalFileExist('/test', false, false, function () {
-            c.expectLocalFileExistExt('/.test', true, false, false, function () {
-              c.expectQueuedMethod('/', 'test', false, function () {
-                c.testTree.rename('/.test', '/test', function (err) {
-                  expect(err).toBeFalsy();
-                  c.expectLocalFileExist('/test', true, true, function () {
-                    c.expectLocalFileExist('/.temp', false, false, function () {
-                      c.expectQueuedMethod('/', 'test', 'PUT', function () {
-                        c.testTree.open('/test', function (err, file) {
-                          expect(err).toBeFalsy();
-                          expect(origFile.created()).not.toEqual(file.created());
-                          expect(origFile.lastModified()).not.toEqual(file.lastModified());
-                          done();
+          var prevModified = file.lastModified();
+          var newModified = file.lastModified() - 2000;
+          file.setLastModified(newModified);
+          file.close(function (err) {
+            expect(err).toBeFalsy();
+            c.testTree.open('/testfile', function (err, file) {
+              expect(err).toBeFalsy();
+              expect(file.lastModified()).toEqual(prevModified);
+              file.cacheFile(function (err) {
+                expect(err).toBeFalsy();
+                expect(file.lastModified()).toEqual(newModified);
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testListDates', function (done) {
+      function verifyListDates(file1, file2, cb) {
+        c.testTree.list('/*', function (err, files) {
+          expect(err).toBeFalsy();
+          expect(files.length).toEqual(2);
+
+          var list1 = files[0];
+          var list2 = files[1];
+
+          if (list1.getPath() == file2.getPath()) {
+            var swap = list1;
+            list1 = list2;
+            list2 = swap;
+          }
+
+          expect(list1.lastModified()).toEqual(file1.lastModified());
+          expect(list2.lastModified()).toEqual(file2.lastModified());
+          cb();
+        });
+      }
+
+      function verifySingleDate(toVerify, cb) {
+        c.testTree.list(toVerify.getPath(), function (err, files) {
+          expect(err).toBeFalsy();
+          expect(files.length).toEqual(1);
+          expect(files[0].lastModified()).toEqual(toVerify.lastModified());
+          cb();
+        });
+      }
+
+      // this test will make sure that file dates remain the same in list view after caching files.
+      c.addFile(c.remoteTree, '/testfile1', function () {
+        c.addFile(c.remoteTree, '/testfile2', function () {
+          c.testTree.open('/testfile1', function (err, file1) {
+            expect(err).toBeFalsy();
+            c.testTree.open('/testfile2', function (err, file2) {
+              expect(err).toBeFalsy();
+              verifyListDates(file1, file2, function () {
+                verifySingleDate(file1, function () {
+                  verifySingleDate(file2, function () {
+                    file1.cacheFile(function (err) {
+                      expect(err).toBeFalsy();
+                      c.testTree.open(file1.getPath(), function (err, file1) {
+                        expect(err).toBeFalsy();
+                        verifyListDates(file1, file2, function () {
+                          verifySingleDate(file1, function () {
+                            verifySingleDate(file2, done);
+                          });
                         });
                       });
                     });
@@ -1289,9 +1339,57 @@ describe('RQTree', function () {
         });
       });
     });
+  });
+
+  describe('IllustratorTests', function () {
+    function saveIllustratorFile(savePath, expectedMethod, cb) {
+      var savePathParent = utils.getParentPath(savePath);
+      var savePathName = utils.getPathName(savePath);
+      var savePathTemp = savePathParent + '/.' + savePathName;
+      // "save" the illustrator file by moving it to a temp file, then moving it back
+      c.testTree.open(savePath, function (err, origFile) {
+        expect(err).toBeFalsy();
+        c.testTree.rename(savePath, savePathTemp, function (err) {
+          expect(err).toBeFalsy();
+          c.expectLocalFileExist(savePath, false, false, function () {
+            c.expectLocalFileExistExt(savePathTemp, true, false, false, function () {
+              c.expectQueuedMethod(savePathParent, savePathName, expectedMethod == 'POST' ? 'DELETE' : false, function () {
+                c.testTree.rename(savePathTemp, savePath, function (err) {
+                  expect(err).toBeFalsy();
+                  c.expectLocalFileExist(savePath, true, expectedMethod == 'POST' ? false: true, function () {
+                    c.expectLocalFileExist(savePathTemp, false, false, function () {
+                      c.expectQueuedMethod(savePathParent, savePathName, expectedMethod, function () {
+                        c.testTree.open(savePath, function (err, file) {
+                          expect(err).toBeFalsy();
+                          if (expectedMethod == 'PUT') {
+                            expect(origFile.created()).not.toEqual(file.created());
+                          } else {
+                            expect(origFile.created()).toEqual(file.created());
+                          }
+                          expect(origFile.lastModified()).not.toEqual(file.lastModified());
+                          cb();
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    }
+    it('testIllustratorCreate', function (done) {
+      // create a new file
+      c.addQueuedFile('/test', function () {
+        saveIllustratorFile('/test', 'PUT', done);
+      });
+    });
 
     it('testIllustratorUpdate', function (done) {
-      done();
+      c.addCachedFile('/test', function () {
+        saveIllustratorFile('/test', 'POST', done);
+      });
     });
   });
 });

@@ -279,7 +279,6 @@ describe('RQProcessor', function () {
     });
 
     it('testSyncDates', function (done) {
-      // c.fs.setTestFile('/local/path/test', 'world');
       c.addFile(c.remoteTree, '/test', function () {
         c.testTree.open('/test', function (err, file) {
           expect(err).toBeFalsy();
@@ -302,6 +301,24 @@ describe('RQProcessor', function () {
                 });
               });
             }, 10);
+          });
+        });
+      });
+    });
+
+
+    it('testCacheFileAfterSync', function (done) {
+      c.addQueuedFile('/testfile', function () {
+        processor.sync(config, function (err) {
+          expect(err).toBeFalsy();
+          expect(c.getPathMethodRequestCount('/testfile', 'POST')).toEqual(1);
+          c.testTree.open('/testfile', function (err, file) {
+            expect(err).toBeFalsy();
+            file.cacheFile(function (err) {
+              expect(err).toBeFalsy();
+              expect(c.getPathMethodRequestCount('/testfile', 'GET')).toEqual(0);
+              done();
+            });
           });
         });
       });

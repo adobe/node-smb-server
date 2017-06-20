@@ -15,7 +15,7 @@ var async = require('async');
 
 var TestStream = require('./test-stream');
 
-var requestedUrls = [];
+var requestedUrls = {};
 var urls;
 var statusCodes;
 var createCb = function (url, data, cb) {
@@ -89,31 +89,42 @@ function TestResponse(statusCode) {
 
 util.inherits(TestResponse, TestStream);
 
+function addRequestedUrl(url, method) {
+  if (!requestedUrls[url]) {
+    requestedUrls[url] = {};
+  }
+  if (!requestedUrls[url][method]) {
+    requestedUrls[url][method] = 0;
+  }
+  requestedUrls[url][method]++;
+}
+
 function clearAll() {
-  requestedUrls = [];
+  requestedUrls = {};
   urls = [];
   statusCodes = {};
 };
 
 function request(options, cb) {
-  requestedUrls.push(options.url);
+  var method = options.method ? options.method : 'GET';
+  addRequestedUrl(options.url, method);
 
   var statusCode = 404;
   var req = new TestRequest(options, cb);
-  if (options.method == 'GET' || !options.method) {
+  if (method == 'GET') {
     if (urls[options.url]) {
       req.setReadStream(urls[options.url]);
     } else {
       statusCode = 404;
     }
-  } else if (options.method == 'POST') {
+  } else if (method == 'POST') {
     // insert
     statusCode = 201;
-  } else if (options.method == 'PUT') {
+  } else if (method == 'PUT') {
     if (urls[options.url]) {
       statusCode = 200;
     }
-  } else if (options.method == 'DELETE') {
+  } else if (method == 'DELETE') {
     if (urls[options.url]) {
       statusCode = 200;
     }
@@ -150,8 +161,17 @@ function registerUrlStatusCode(url, statusCode) {
   statusCodes[url] = statusCode;
 }
 
+function getUrlMethodRequestCount(url, method) {
+  if (requestedUrls[url]) {
+    if (requestedUrls[url][method]) {
+      return requestedUrls[url][method];
+    }
+  }
+  return 0;
+}
+
 function wasUrlRequested(url) {
-  return (requestedUrls.indexOf(url) >= 0);
+  return (getUrlMethodRequestCount(url, 'GET') >= 0);
 }
 
 module.exports.request = request;
@@ -162,3 +182,4 @@ module.exports.registerUpdate = registerUpdate;
 module.exports.registerDelete = registerDelete;
 module.exports.registerUrlStatusCode = registerUrlStatusCode;
 module.exports.wasUrlRequested = wasUrlRequested;
+module.exports.getUrlMethodRequestCount = getUrlMethodRequestCount;
