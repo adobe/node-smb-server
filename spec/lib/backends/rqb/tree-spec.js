@@ -11,8 +11,8 @@
  */
 
 var RQCommon = require('../rq/rq-common');
-var RQBShare = require('../../../../lib/backends/rqb/share');
-var RQBTree = require('../../../../lib/backends/rqb/tree');
+var RQBShare = RQCommon.require(__dirname, '../../../../lib/backends/rqb/share');
+var RQBTree = RQCommon.require(__dirname, '../../../../lib/backends/rqb/tree');
 
 describe('RQBTree', function () {
     var c;
@@ -64,7 +64,7 @@ describe('RQBTree', function () {
 
     it('testRenameLocal', function (done) {
         c.addFile(c.localTree, '/test', function () {
-            c.testTree.renameLocal('/test', '/test2', function (err) {
+            c.testTree.renameLocal('/test', '/test2', true, function (err) {
                 expect(err).toBeFalsy();
                 c.expectLocalFileExistExt('/test', true, false, false, function () {
                     c.expectLocalFileExistExt('/test2', false, false, false, done);
@@ -74,7 +74,7 @@ describe('RQBTree', function () {
     });
 
     it('testExistsLocal', function (done) {
-        c.addFile(c.localTree, '/test', function () {
+        c.addFile(c.localRawTree, '/test', function () {
             c.testTree.existsLocal('/test', function (err, exists) {
                 expect(err).toBeFalsy();
                 expect(exists).toBeFalsy();
@@ -84,12 +84,13 @@ describe('RQBTree', function () {
     });
 
     it('testExistsLocalWork', function (done) {
-        c.addFile(c.localWorkTree, '/test', function () {
-            c.testTree.existsLocal('/test', function (err, exists) {
-                expect(err).toBeFalsy();
-                expect(exists).toBeTruthy();
-                done();
-            });
+        c.localRawTree.createFile('/.aem/test.json', function (err) {
+          expect(err).toBeFalsy();
+          c.testTree.existsLocal('/test', function (err, exists) {
+            expect(err).toBeFalsy();
+            expect(exists).toBeTruthy();
+            done();
+          });
         });
     });
 
@@ -102,22 +103,24 @@ describe('RQBTree', function () {
     });
 
     it('testIsLocalDirectory', function (done) {
-        c.addFile(c.localWorkTree, '/test', function () {
-            c.testTree.isLocalDirectory('/test', function (err, isdir) {
-                expect(err).toBeFalsy();
-                expect(isdir).toBeFalsy();
-                done();
-            });
+      c.localRawTree.createFile('/.aem/test.json', function (err) {
+        expect(err).toBeFalsy();
+        c.testTree.isLocalDirectory('/test', function (err, isdir) {
+          expect(err).toBeFalsy();
+          expect(isdir).toBeFalsy();
+          done();
         });
+      });
     });
 
     it('testIsLocalDirectoryTrue', function (done) {
-        c.addDirectory(c.localWorkTree, '/test', function () {
-            c.testTree.isLocalDirectory('/test', function (err, isdir) {
-                expect(err).toBeFalsy();
-                expect(isdir).toBeTruthy();
-                done();
-            });
+      c.localRawTree.createDirectory('/test', function (err) {
+        expect(err).toBeFalsy();
+        c.testTree.isLocalDirectory('/test', function (err, isdir) {
+          expect(err).toBeFalsy();
+          expect(isdir).toBeTruthy();
+          done();
         });
+      });
     });
 });

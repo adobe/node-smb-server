@@ -11,7 +11,7 @@
  */
 
 var testcommon = require('../../test-common');
-var requestqueue = require('../../../../lib/backends/rq/requestqueue');
+var requestqueue = testcommon.require(__dirname, '../../../../lib/backends/rq/requestqueue');
 var Path = require('path');
 
 describe('RequestQueue', function () {
@@ -160,9 +160,12 @@ describe('RequestQueue', function () {
   beforeEach(function () {
     common = new testcommon();
 
-    rq = new requestqueue({db: common.db});
+    rq = new requestqueue({path: '/test'});
+
+    common['db'] = rq.db;
 
     spyOn(rq, 'emit').andCallThrough();
+    spyOn(common.db, 'find').andCallThrough();
   });
 
   describe('GetRequests', function () {

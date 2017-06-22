@@ -11,17 +11,22 @@
  */
 
 var RQCommon = require('../rq/rq-common');
-var RQBFile = require('../../../../lib/backends/rqb/file');
+var RQBFile = RQCommon.require(__dirname, '../../../../lib/backends/rqb/file');
+var RQBShare = RQCommon.require(__dirname, '../../../../lib/backends/rqb/share');
+var RQBTree = RQCommon.require(__dirname, '../../../../lib/backends/rqb/tree');
 
 describe('RQBFile', function () {
     var c;
 
     beforeEach(function () {
-        c = new RQCommon();
+        c = new RQCommon({
+            shareType: RQBShare,
+            treeType: RQBTree
+        });
     });
 
     it('testCacheFile', function (done) {
-        c.addFile(c.remoteTree, '/test', function () {
+        c.addFileWithContent(c.remoteTree, '/test', '/test', function () {
             c.testTree.open('/test', function (err, file) {
                 expect(err).toBeFalsy();
                 file.cacheFile(function (err, cached) {
