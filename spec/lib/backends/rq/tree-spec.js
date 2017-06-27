@@ -1392,4 +1392,205 @@ describe('RQTree', function () {
       });
     });
   });
+
+  describe('CacheInfoOnly', function () {
+    beforeEach(function () {
+      c.testTree.local.cacheInfoOnly = true;
+    });
+
+    function _addQueuedCacheInfoOnlyFile(path, cb) {
+      c.addRawLocalFile(path, function () {
+        c.testTree.createFile(path, function (err, file) {
+          expect(err).toBeFalsy();
+          file.close(function (err) {
+            expect(err).toBeFalsy();
+            cb(file);
+          });
+        });
+      });
+    }
+
+    function _addCachedCacheInfoOnlyFile(path, cb) {
+      c.addFile(c.remoteTree, path, function () {
+        c.testTree.open(path, function (err, file) {
+          expect(err).toBeFalsy();
+          c.expectLocalFileExist(path, false, false, function () {
+            file.cacheFile(function (err) {
+              expect(err).toBeFalsy();
+              c.expectLocalFileExistExt(path, true, true, false, function () {
+                cb();
+              });
+            });
+          });
+        });
+      });
+    }
+
+    it('testCreateFile', function (done) {
+      _addQueuedCacheInfoOnlyFile('/test', function (file) {
+        expect(file.isDirectory()).toBeFalsy();
+        expect(file.isFile()).toBeTruthy();
+        c.expectLocalFileExist('/test', true, true, function () {
+          c.expectQueuedMethod('/', 'test', 'PUT', done);
+        });
+      });
+    });
+
+    it('testCreateDirectory', function (done) {
+      c.localRawTree.createDirectory('/test', function (err) {
+        expect(err).toBeFalsy();
+        c.testTree.createDirectory('/test', function (err) {
+          expect(err).toBeFalsy();
+          c.remoteTree.exists('/test', function (err, exists) {
+            expect(err).toBeFalsy();
+            expect(exists).toBeTruthy();
+            done();
+          });
+        });
+      });
+    });
+
+    it('testRenameFile', function (done) {
+      _addCachedCacheInfoOnlyFile('/test', function () {
+        c.localRawTree.rename('/test', '/test2', function (err) {
+          expect(err).toBeFalsy();
+          c.testTree.rename('/test', '/test2', function (err) {
+            expect(err).toBeFalsy();
+            c.expectLocalFileExist('/test', false, false, function () {
+              c.expectLocalFileExist('/test2', true, true, function () {
+                c.expectQueuedMethod('/', 'test', 'DELETE', function () {
+                  c.expectQueuedMethod('/', 'test2', 'PUT', done);
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testRenameFileExisting', function (done) {
+      _addCachedCacheInfoOnlyFile('/test', function () {
+        _addCachedCacheInfoOnlyFile('/test2', function () {
+          c.localRawTree.rename('/test', '/test2', function (err) {
+            expect(err).toBeFalsy();
+            c.expectLocalFileExistExt('/test', false, true, false, function () {
+              c.expectQueuedMethod('/', 'test', false, function () {
+                c.testTree.rename('/test', '/test2', function (err) {
+                  expect(err).toBeFalsy();
+                  c.expectLocalFileExist('/test', false, false, function () {
+                    c.expectLocalFileExist('/test2', true, false, function () {
+                      c.expectQueuedMethod('/', 'test2', 'POST', done);
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testRenameDirectory', function (done) {
+      c.localRawTree.createDirectory('/test', function (err) {
+        expect(err).toBeFalsy();
+        c.testTree.createDirectory('/test', function (err) {
+          expect(err).toBeFalsy();
+          _addCachedCacheInfoOnlyFile('/test/testfile', function () {
+            c.localRawTree.rename('/test', '/test2', function (err) {
+              expect(err).toBeFalsy();
+              c.expectLocalFileExist('/test2/testfile', true, false, function () {
+                c.testTree.rename('/test', '/test2', function (err) {
+                  expect(err).toBeFalsy();
+                  c.remoteTree.exists('/test2', function (err, exists) {
+                    expect(err).toBeFalsy();
+                    expect(exists).toBeTruthy();
+                    done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testRenameDirectoryLocalOnly', function (done) {
+      c.testTree.rename('/test', '/test2', function (err) {
+        expect(err).toBeFalsy();
+        done();
+      });
+    });
+
+    it('testDeleteFile', function (done) {
+      _addQueuedCacheInfoOnlyFile('/test', function () {
+        c.localRawTree.delete('/test', function (err) {
+          expect(err).toBeFalsy();
+          c.expectLocalFileExistExt('/test', false, true, true, function () {
+            c.expectQueuedMethod('/', 'test', 'PUT', function () {
+              c.testTree.delete('/test', function (err) {
+                expect(err).toBeFalsy();
+                c.expectLocalFileExist('/test', false, false, function () {
+                  c.expectQueuedMethod('/', 'test', false, done);
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testDeleteDirectory', function (done) {
+      c.localTree.deleteDirectory('/test', function (err) {
+        expect(err).toBeFalsy();
+        done();
+      });
+    });
+
+    it('testUpdateFile', function (done) {
+      _addCachedCacheInfoOnlyFile('/test', function () {
+        c.testTree.open('/test', function (err, file) {
+          expect(err).toBeFalsy();
+          file.setLength(100, function (err) {
+            expect(err).toBeFalsy();
+            file.close(function (err) {
+              expect(err).toBeFalsy();
+              c.testTree.open('/test', function (err, file) {
+                expect(err).toBeFalsy();
+                expect(file.size()).toEqual(0);
+                c.expectQueuedMethod('/', 'test', 'POST', done);
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('testRenameTempToNotTemp', function (done) {
+      _addQueuedCacheInfoOnlyFile('/test', function () {
+        c.localRawTree.rename('/test', '/.temp', function (err) {
+          expect(err).toBeFalsy();
+          c.testTree.rename('/test', '/.temp', function (err) {
+            expect(err).toBeFalsy();
+            c.expectLocalFileExist('/test', false, false, function () {
+              c.expectLocalFileExistExt('/.temp', true, false, false, function () {
+                c.expectQueuedMethod('/', 'test', false, function () {
+                  c.localRawTree.rename('/.temp', '/test', function (err) {
+                    expect(err).toBeFalsy();
+                    c.testTree.rename('/.temp', '/test', function (err) {
+                      expect(err).toBeFalsy();
+                      c.expectLocalFileExist('/.temp', false, false, function () {
+                        c.expectLocalFileExist('/test', true, true, function () {
+                          c.expectQueuedMethod('/', 'test', 'PUT', done);
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
 });

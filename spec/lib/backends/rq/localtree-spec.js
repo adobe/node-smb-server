@@ -33,26 +33,6 @@ describe('LocalTreeTests', function () {
     });
   });
 
-  it('testIsLocalDirectory', function (done) {
-    c.localTree.isLocalDirectory('/test', function (err, isDir) {
-      expect(err).toBeFalsy();
-      expect(isDir).toBeFalsy();
-      c.addFile(c.localTree, '/test', function () {
-        c.localTree.isLocalDirectory('/test', function (err, isDir) {
-          expect(err).toBeFalsy();
-          expect(isDir).toBeFalsy();
-          c.addDirectory(c.localTree, '/testdir', function () {
-            c.localTree.isLocalDirectory('/testdir', function (err, isDir) {
-              expect(err).toBeFalsy();
-              expect(isDir).toBeTruthy();
-              done();
-            });
-          });
-        });
-      });
-    });
-  });
-
   it('testGetInfoFilePath', function () {
     expect(c.localTree.getInfoFilePath('/test')).toEqual('/.aem/test.json');
   });
