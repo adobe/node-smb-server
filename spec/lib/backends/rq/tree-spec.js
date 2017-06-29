@@ -1395,7 +1395,10 @@ describe('RQTree', function () {
 
   describe('CacheInfoOnly', function () {
     beforeEach(function () {
+      c.testTree.config.noUnicodeNormalize = true;
       c.testTree.local.cacheInfoOnly = true;
+      c.testTree.local.config.noUnicodeNormalize = true;
+      c.testTree.local.source.config.noUnicodeNormalize = true;
     });
 
     function _addQueuedCacheInfoOnlyFile(path, cb) {
@@ -1589,6 +1592,18 @@ describe('RQTree', function () {
               });
             });
           });
+        });
+      });
+    });
+
+    it('testEncoding', function (done) {
+      var encodedNameRaw = '%EC%9D%B4%EB%91%90%E5%90%8F%E8%AE%80';
+      var encodedName = decodeURI(encodedNameRaw);
+      var encoded = '/' + encodedName;
+      expect(encodeURI(encodedName)).toEqual(encodedNameRaw);
+      _addQueuedCacheInfoOnlyFile(encoded, function () {
+        c.expectLocalFileExist(encoded, true, true, function () {
+          c.expectQueuedMethod('/', encodedName, 'PUT', done);
         });
       });
     });
