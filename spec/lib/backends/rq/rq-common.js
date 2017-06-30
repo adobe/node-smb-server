@@ -202,6 +202,10 @@ RQCommon.prototype.addFileWithContent = function (tree, fileName, content, cb) {
   });
 };
 
+RQCommon.prototype.addRawLocalFile = function (path, cb) {
+  this.fs.createEntity(Path.join(this.localPrefix, path), false, cb);
+};
+
 RQCommon.prototype.addFile = function (tree, fileName, cb) {
   if (!(tree instanceof TestTree)) {
     // for compatibility, force use of raw local tree if RQLocalTree is provided.

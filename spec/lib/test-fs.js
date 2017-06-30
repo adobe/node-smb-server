@@ -559,22 +559,41 @@ TestFS.prototype.rmdir = function (path ,cb) {
 TestFS.prototype.rename = function (oldName, newName, cb) {
   var self = this;
   var newDir = utils.getParentPath(newName);
-  var newName = utils.getPathName(newName);
+  var newPathName = utils.getPathName(newName);
 
   // remove target file if needed
-  self.allFiles.remove({path: newDir, name: newName}, {}, function (err) {
+  self.allFiles.remove({path: newDir, name: newPathName}, {}, function (err) {
     if (err) {
       cb(err);
     } else {
       var newDate = new Date();
-      _updateByName.call(self, oldName, {path: newDir, name: newName}, true, function (err, numUpdated) {
+      _updateByName.call(self, oldName, {path: newDir, name: newPathName}, true, function (err, numUpdated) {
         if (err) {
           cb(err);
         } else if (numUpdated != 1) {
           cb('unexpected number of items renamed from ' + oldName + ' to ' + newName + ': ' + numUpdated);
         } else {
-          self.allFiles.update({path: oldName}, {$set: {path: newName}}, {multi:true}, function (err) {
-            cb(err);
+          var regex = new RegExp('^' + oldName.replace('/', '\\/'), "g");
+          self.allFiles.find({path: regex}, function (err, docs) {
+            async.each(docs, function (doc, eachCb) {
+              var doReplace = false;
+              if (doc.path == oldName) {
+                doReplace = newName;
+              } else if (doc.path.length > oldName.length) {
+                if (doc.path.substr(0, oldName.length + 1) == oldName + '/') {
+                  doReplace = newName + doc.path.substr(oldName.length);
+                }
+              }
+              if (doReplace) {
+                self.allFiles.update({_id: doc._id}, {$set: {path: doReplace}}, {}, function (err) {
+                  eachCb(err);
+                });
+              } else {
+                eachCb();
+              }
+            }, function (err) {
+              cb(err);
+            });
           });
         }
       });
