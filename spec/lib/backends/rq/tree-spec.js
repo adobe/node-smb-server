@@ -1162,6 +1162,23 @@ describe('RQTree', function () {
         });
       });
     });
+
+    iit('testListRemoteTempFile', function (done) {
+      c.addFile(c.remoteTree, '/.temp', function () {
+        c.testTree.list('/*', function (err, list) {
+          expect(err).toBeFalsy();
+          expect(list.length).toEqual(0);
+          c.testTree.list('/.temp', function (err, list) {
+            expect(err).toBeFalsy();
+            expect(list.length).toEqual(0);
+            c.testTree.exists('/.temp', function (err, exists) {
+              expect(exists).toBeFalsy();
+              done();
+            });
+          });
+        });
+      });
+    });
   });
 
   describe('ConcurrencyTests', function () {
