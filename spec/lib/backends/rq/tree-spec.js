@@ -1163,7 +1163,7 @@ describe('RQTree', function () {
       });
     });
 
-    iit('testListRemoteTempFile', function (done) {
+    it('testListRemoteTempFile', function (done) {
       c.addFile(c.remoteTree, '/.temp', function () {
         c.testTree.list('/*', function (err, list) {
           expect(err).toBeFalsy();
