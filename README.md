@@ -109,7 +109,7 @@ You could write a custom backend by implementing the `Share`, `Tree` and `File` 
     * local file system (`lib/backends/fs`)
     * JCR (`lib/backends/jcr`)
     * AEM Assets (`lib/backends/dam`)
-* Tested with Finder on OS X (Yosemite, El Capitan).
+* Tested with Finder on OS X (Yosemite, El Capitan, Sierra).
 
 ## ToDo's
 
