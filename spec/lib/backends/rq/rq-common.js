@@ -29,13 +29,6 @@ function RQCommon(config) {
 
   config = config || {};
 
-  if (config.shareType) {
-    RQShare = config.shareType;
-  }
-  if (config.treeType) {
-    RQTree = config.treeType;
-  }
-
   self.localPrefix = "/local/path";
 
   var remoteShare = new FSShare('remote', {
@@ -77,7 +70,8 @@ function RQCommon(config) {
       consts.REQUEST_DB
     ],
     host: host,
-    port: port
+    port: port,
+    cacheInfoOnly: config.cacheInfoOnly ? true : false
   };
   self.testShare = new RQShare(
     'rq',

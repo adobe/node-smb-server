@@ -14,14 +14,30 @@ var testfs = require('./test-fs');
 var testDatastore = require('./test-nedb');
 var testMkdirp = require('./test-mkdirp');
 var testRequest = require('./test-request');
+var testHttp = require('./test-http');
+var testSocketIO = require('./test-socketio');
+var testExpress = require('./test-express');
+var testBodyParser = require('./test-body-parser');
+var testArchiver = require('./test-archiver');
 
 var globalfs = new testfs();
 var globalMkdirp = new testMkdirp(globalfs);
+var globalHttp = new testHttp();
+var globalSocketIO = new testSocketIO();
+var globalExpress = new testExpress();
+var globalBodyParser = new testBodyParser();
+var globalArchiver = new testArchiver();
 
 globalfs['@global'] = true;
 testRequest.request['@global'] = true;
 testDatastore['@global'] = true;
 globalMkdirp.mkdirp['@global'] = true;
+testHttp['@global'] = true;
+globalSocketIO.create['@global'] = true;
+globalExpress.create['@global'] = true;
+globalExpress.create['static'] = globalExpress.static;
+globalBodyParser['@global'] = true;
+globalArchiver.archive['@global'] = true;
 
 var proxyquire = require('proxyquire').noCallThru();
 
@@ -59,9 +75,15 @@ function TestCommon() {
 TestCommon.require = function (dirname, name) {
   return proxyquire(Path.join(dirname, name), {
     'request': testRequest.request,
+    'requestretry': testRequest.request,
     'fs': globalfs,
     'mkdirp': globalMkdirp.mkdirp,
-    'nedb': testDatastore
+    'nedb': testDatastore,
+    'socket.io': globalSocketIO.create,
+    'http': globalHttp,
+    'express': globalExpress.create,
+    'body-parser': globalBodyParser,
+    'archiver': globalArchiver.archive
   });
 };
 
