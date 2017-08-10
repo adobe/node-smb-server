@@ -21,6 +21,7 @@ var TestStream = require('./test-stream');
 
 function TestFS() {
   this.clearAll();
+  this.allowDirDelete = false;
 
   EventEmitter.call(this);
 }
@@ -146,6 +147,10 @@ function _trimSlash(path) {
   }
   return path;
 }
+
+TestFS.prototype.allowDeleteNonEmptyDir = function (allow) {
+  this.allowDirDelete = allow ? true : false;
+};
 
 TestFS.prototype.printAll = function (cb) {
   this.allFiles.find({}, function (err, docs) {
@@ -542,7 +547,7 @@ TestFS.prototype.rmdir = function (path ,cb) {
   self.readdir(path, function (err, files) {
     if (err) {
       cb(err);
-    } else if (files.length) {
+    } else if (files.length && !self.allowDirDelete) {
       cb('directory to remove is not empty: ' + path);
     } else {
       self.allFiles.remove({path: dir, name: name, isdir: true}, {}, function (err, numRemoved) {
