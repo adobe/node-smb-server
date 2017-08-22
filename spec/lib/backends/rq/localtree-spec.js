@@ -38,71 +38,39 @@ describe('LocalTreeTests', function () {
   });
 
   describe('Downloading', function () {
-    it('testIsDownloading', function (done) {
-      c.localTree.isDownloading('/testfile', function (err, isDownloading) {
-        expect(err).toBeFalsy();
-        expect(isDownloading).toBeFalsy();
-        c.localTree.setDownloading('/testfile', true, function (err) {
-          expect(err).toBeFalsy();
-          c.localTree.isDownloading('/testfile', function (err, isDownloading) {
-            expect(err).toBeFalsy();
-            expect(isDownloading).toBeTruthy();
-            c.localTree.setDownloading('/testfile', false, function (err) {
-              expect(err).toBeFalsy();
-              c.localTree.isDownloading('/testfile', function (err, isDownloading) {
-                expect(err).toBeFalsy();
-                expect(isDownloading).toBeFalsy();
-                done();
-              });
-            });
-          });
-        });
-      });
+    it('testIsDownloading', function () {
+      expect(c.localTree.isDownloading('/testfile')).toBeFalsy();
+      c.localTree.setDownloading('/testfile', true);
+      expect(c.localTree.isDownloading('/testfile')).toBeTruthy();
+      c.localTree.setDownloading('/testfile', false);
+      expect(c.localTree.isDownloading('/testfile')).toBeFalsy();
     });
 
-    it('testDownloadingMultiple', function (done) {
-      c.localTree.setDownloading('/testfile', false, function (err) {
-        expect(err).toBeFalsy();
-        c.localTree.isDownloading('/testfile', function (err, isDownloading) {
-          expect(err).toBeFalsy();
-          expect(isDownloading).toBeFalsy();
-          c.localTree.setDownloading('/testfile', true, function (err) {
-            expect(err).toBeFalsy();
-            c.localTree.setDownloading('/testfile', true, function (err) {
-              expect(err).toBeFalsy();
-              c.localTree.isDownloading('/testfile', function (err, isDownloading) {
-                expect(err).toBeFalsy();
-                expect(isDownloading).toBeTruthy();
-                done();
-              });
-            });
-          });
-        });
-      });
+    it('testDownloadingMultiple', function () {
+      c.localTree.setDownloading('/testfile', false);
+      expect(c.localTree.isDownloading('/testfile')).toBeFalsy();
+      c.localTree.setDownloading('/testfile', true);
+      expect(c.localTree.isDownloading('/testfile')).toBeTruthy();
     });
 
     it('testWaitDownload', function (done) {
       var waited = false;
-      c.localTree.setDownloading('/testfile', true, function (err) {
+      c.localTree.setDownloading('/testfile', true);
+      c.localTree.waitOnDownload('/testfile', function (err) {
         expect(err).toBeFalsy();
+        expect(waited).toBeTruthy();
+
+        // it shouldn't wait a second time
         c.localTree.waitOnDownload('/testfile', function (err) {
           expect(err).toBeFalsy();
-          expect(waited).toBeTruthy();
-
-          // it shouldn't wait a second time
-          c.localTree.waitOnDownload('/testfile', function (err) {
-            expect(err).toBeFalsy();
-            done();
-          });
+          done();
         });
-
-        setTimeout(function () {
-          c.localTree.setDownloading('/testfile', false, function (err) {
-            expect(err).toBeFalsy();
-            waited = true;
-          });
-        }, 500);
       });
+
+      setTimeout(function () {
+        waited = true;
+        c.localTree.setDownloading('/testfile', false);
+      }, 500);
     });
 
     it('testWaitDownloadNotDownloading', function (done) {
@@ -708,7 +676,6 @@ describe('LocalTreeTests', function () {
         c.addQueuedFile('/testfile', function () {
           c.testTree.rename('/.temp', '/testfile', function (err) {
             expect(err).toBeFalsy();
-            c.fs.printAll();
             c.expectLocalFileExist('/.temp', false, false, function () {
               c.expectLocalFileExist('/testfile', true, true, function () {
                 c.expectQueuedMethod('/', '.temp', false, function () {

@@ -1252,6 +1252,41 @@ describe('RQTree', function () {
         });
       });
     });
+
+
+    it('testWorkConflict', function (done) {
+      // simulate a file that is being downloaded whose information is requested mid-download
+      c.addFile(c.remoteTree, '/test', function () {
+        c.addFile(c.localRawTree, '/test', function () {
+          c.localTree.setDownloading('/test', true);
+          c.testTree.list('/*', function (err, list) {
+            expect(err).toBeFalsy();
+            expect(list.length).toEqual(1);
+            c.localTree.exists('/test', function (err, exists) {
+              expect(err).toBeFalsy();
+              expect(exists).toBeFalsy();
+              c.localTree.open('/test', function (err, file) {
+                expect(err).toBeTruthy();
+                c.localTree.list('/test', function (err, list) {
+                  expect(err).toBeFalsy();
+                  expect(list.length).toEqual(0);
+                  c.localTree.createFile('/test', function (err) {
+                    expect(err).toBeTruthy();
+                    c.localTree.rename('/test', '/test2', function (err) {
+                      expect(err).toBeTruthy();
+                      c.localTree.delete('/test', function (err) {
+                        expect(err).toBeTruthy();
+                        done();
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
   });
 
   describe('DateTests', function () {
