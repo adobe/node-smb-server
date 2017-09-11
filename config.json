@@ -98,7 +98,12 @@
         "syncpurged",
         "syncconflict",
         "folderlist",
-        "requestqueueinit"
+        "requestqueueinit",
+        "longdownload",
+        "downloadprogress",
+        "downloadstart",
+        "downloadend",
+        "downloaderr"
       ],
       "preserveCacheFiles": [
         "request-queue.nedb"
