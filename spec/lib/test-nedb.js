@@ -10,25 +10,14 @@
  *  governing permissions and limitations under the License.
  */
 
-'use strict';
-
+var Datastore = require('nedb');
 var util = require('util');
-var RQShare = require('../rq/share');
-var RQBasicTree = require('./tree');
 
-var RQBasicShare = function (name, config, remoteShare, remoteTree, localTree, workTree) {
-    if (!(this instanceof RQBasicShare)) {
-        return new RQBasicShare(name, config, remoteShare, remoteTree, localTree, workTree);
-    }
+function TestDatastore() {
+  // force an in-memory database
+  Datastore.call(this);
+}
 
-    RQShare.call(this, name, config, remoteShare, remoteTree, localTree, workTree);
-};
+util.inherits(TestDatastore, Datastore);
 
-// the RQBasicShare prototype inherits from RQShare
-util.inherits(RQBasicShare, RQShare);
-
-RQBasicShare.prototype.createTree = function (remoteTree, config) {
-    return new RQBasicTree(this, remoteTree, config);
-};
-
-module.exports = RQBasicShare;
+module.exports = TestDatastore;

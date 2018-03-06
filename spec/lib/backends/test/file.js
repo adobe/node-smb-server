@@ -82,7 +82,11 @@ TestFile.prototype.read = function (buffer, offset, length, position, cb) {
         if (source >= this.data.content.length) {
             break;
         }
-        buffer[target] = this.data.content[source];
+        if (buffer instanceof Buffer) {
+            buffer.write(this.data.content[source], target);
+        } else {
+            buffer[target] = this.data.content[source];
+        }
         writtenBuffer.push(this.data.content[source]);
         target++;
         source++;
@@ -98,7 +102,11 @@ TestFile.prototype.write = function (data, position, cb) {
         if (this.data.content instanceof Array) {
             var target = position;
             for (var i = 0; i < data.length; i++) {
-                this.data.content[target] = data[i];
+                if (data instanceof Buffer) {
+                    this.data.content[target] = data.toString('utf8', i, i+1);
+                } else {
+                    this.data.content[target] = data[i];
+                }
                 target++;
             }
         } else {
@@ -108,7 +116,11 @@ TestFile.prototype.write = function (data, position, cb) {
                 before = this.data.content.substr(0, position);
             }
             var after = this.data.content.substr(position + data.length);
-            this.data.content = before + data + after;
+            if (data instanceof Buffer) {
+                this.data.content = before + data.toString('utf8') + after;
+            } else {
+                this.data.content = before + data + after;
+            }
         }
         cb();
     }

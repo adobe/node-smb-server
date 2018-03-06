@@ -38,6 +38,7 @@
         "pass": "<pwd>"
       },
       "maxSockets": 64,
+      "allCacheTTL": 1800000,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000
     },
@@ -53,6 +54,7 @@
       },
       "path": "/",
       "maxSockets": 64,
+      "allCacheTTL": 1800000,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000
     },
@@ -67,6 +69,7 @@
         "pass": "<pwd>"
       },
       "maxSockets": 64,
+      "allCacheTTL": 1800000,
       "contentCacheTTL": 30000,
       "binCacheTTL": 600000,
       "expiration": 30000,
@@ -94,7 +97,16 @@
         "syncerr",
         "syncpurged",
         "syncconflict",
-        "requestqueueinit"
+        "folderlist",
+        "requestqueueinit",
+        "longdownload",
+        "downloadprogress",
+        "downloadstart",
+        "downloadend",
+        "downloaderr"
+      ],
+      "preserveCacheFiles": [
+        "request-queue.nedb"
       ]
     }
   }

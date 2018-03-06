@@ -11,25 +11,29 @@
  */
 
 var Share = require('../../../../lib/spi/share');
-var TestTree = require('./tree');
 
-var TestShare = function (name, config) {
+var TestShare = function (name, config, tree) {
     if (!(this instanceof TestShare)) {
         return new TestShare();
     }
 
-    this.connectedTree = config.tree;
-    this.localTree = config.localTree;
+    this.isConnected = false;
+    this.tree = tree;
+    this.fetchCb = function (path, cb) { cb(); };
 
     Share.call(this, name, config);
 };
 
+TestShare.prototype.setFetchCb = function (cb) {
+  this.fetchCb = cb;
+};
+
 TestShare.prototype.connect = function (session, shareLevelPassword, cb) {
-    if (this.connectedTree) {
+    if (this.isConnected) {
         cb('test tree is already connected');
     } else {
-        this.connectedTree = new TestTree();
-        cb(null, this.connectedTree);
+        this.isConnected = true;
+        cb(null, this.tree);
     }
 };
 
@@ -38,37 +42,31 @@ TestShare.prototype.buildResourceUrl = function (path) {
 };
 
 TestShare.prototype.fetchResource = function (path, cb) {
-    var self = this;
-    var fetchFile = function () {
-        self.connectedTree.open(path, function (err, file) {
-            if (err) {
-                cb(err);
-            } else {
-                var buffer = new Array(file.size());
-                file.read(buffer, 0, file.size(), 0, function (err, read, readBuffer) {
-                    self.localTree.addFile(file.getPath(), file.isReadOnly(), buffer, function (err) {
-                        if (err) {
-                            cb(err);
-                        } else {
-                            cb(null, path);
-                        }
-                    });
-                });
-            }
-        });
-    }
+  var self = this;
 
-    if (!self.localTree) {
-        cb('attempting to fetch resource but no local tree is defined');
+  var fetchFile = function () {
+    self.tree.open(path, function (err, file) {
+      if (err) {
+        cb(err);
+      } else {
+        self.fetchCb(file, function () {
+          cb(null, path);
+        });
+      }
+    });
+  };
+
+  if (!self.tree) {
+    cb('attempting to fetch resource but no tree is defined');
+  } else {
+    if (!self.isConnected) {
+      self.connect({}, {}, function (err, tree) {
+        fetchFile();
+      });
     } else {
-        if (!self.connectedTree) {
-            self.connect({}, {}, function (err, tree) {
-                fetchFile();
-            });
-        } else {
-            fetchFile();
-        }
+      fetchFile();
     }
+  }
 };
 
 TestShare.prototype.applyRequestDefaults = function (options) {
