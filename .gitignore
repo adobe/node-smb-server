@@ -8,6 +8,7 @@ smbrqwork/
 .settings
 .idea/
 *.iml
+.vscode
 
 # node specific files
 node_modules/
