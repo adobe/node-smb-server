@@ -456,7 +456,7 @@ TestFS.prototype.read = function (fd, buffer, offset, length, position, cb) {
         lastIndex = data.length;
       };
       var totalToRead = lastIndex - position;
-      var retBuff = new Buffer(totalToRead);
+      var retBuff = Buffer.alloc(totalToRead);
       var currRead = 0;
       for (var i = position; i < lastIndex; i++) {
         var targetIndex = offset + currRead;
