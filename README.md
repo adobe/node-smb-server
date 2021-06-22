@@ -1,5 +1,7 @@
 # SMB Server for Node.js
 
+**:warning: This repository is no longer actively maintained.**
+
 ## Overwiew
 
 **node-smb-server** is an open-source JavaScript implementation of the [SMB/CIFS](https://en.wikipedia.org/wiki/Server_Message_Block#SMB_/_CIFS_/_SMB1) file sharing protocol.
